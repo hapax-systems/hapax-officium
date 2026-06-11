@@ -142,5 +142,19 @@ async def get_status_reports():
 
 @router.get("/status")
 async def get_status():
-    """Minimal system self-check."""
-    return _response({"healthy": True})
+    """Backward-compatible minimal system self-check."""
+    return _response(_health_payload())
+
+
+@router.get("/health")
+async def get_health():
+    """Canonical minimal system self-check."""
+    return _response(_health_payload())
+
+
+def _health_payload() -> dict[str, Any]:
+    return {
+        "service": "officium-api",
+        "healthy": True,
+        "status": "healthy",
+    }

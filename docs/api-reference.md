@@ -2,7 +2,7 @@
 
 Logos REST API. Serves cached management data, agent execution,
 nudge actions, profile inspection, demo management, reactive engine status,
-cycle mode control, and scout decision tracking.
+working mode control, health/status self-checks, and scout decision tracking.
 
 **Base URL:** `http://localhost:8050` (dev) / `http://localhost:8051` (Docker)
 
@@ -45,7 +45,8 @@ at 5-minute cadence. Each response includes an `X-Cache-Age` header.
 | GET | `/api/postmortem-actions` | Postmortem action items | List of action objects |
 | GET | `/api/review-cycles` | Performance review cycle tracking | List of review cycle objects |
 | GET | `/api/status-reports` | Status reports (weekly/monthly) | List of status report objects |
-| GET | `/api/status` | Minimal health check | `{"healthy": true}` |
+| GET | `/api/health` | Canonical minimal health check | `{"service": "officium-api", "healthy": true, "status": "healthy"}` |
+| GET | `/api/status` | Compatibility alias for `/api/health` | Same as `/api/health` |
 
 ---
 
@@ -207,11 +208,12 @@ When `logos/api/static/` exists (built SPA), the server also serves:
 
 ## Endpoint Summary
 
-32 endpoints across 8 route groups:
+35 paths total: 33 API paths across 8 route groups, plus root and metrics.
 
 | Group | Count | Prefix |
 |-------|-------|--------|
-| Data | 13 | `/api` |
+| Root | 1 | `/` |
+| Data | 14 | `/api` |
 | Profile | 3 | `/api/profile` |
 | Agents | 3 | `/api/agents` |
 | Nudges | 2 | `/api/nudges` |
@@ -219,6 +221,7 @@ When `logos/api/static/` exists (built SPA), the server also serves:
 | Engine | 3 | `/api/engine` |
 | Cycle Mode | 2 | `/api` |
 | Scout | 2 | `/api` |
+| Metrics | 1 | `/metrics` |
 
 ---
 
@@ -227,8 +230,10 @@ When `logos/api/static/` exists (built SPA), the server also serves:
 Health check:
 
 ```bash
-curl http://localhost:8050/api/status
+curl http://localhost:8050/api/health
 ```
+
+`/api/status` returns the same payload for compatibility.
 
 Get team health with cache age:
 

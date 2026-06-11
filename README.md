@@ -45,7 +45,7 @@ The `management_safety` axiom (weight 95, constitutional) constrains output: the
 
 **Reactive engine** (`logos/engine/`). inotify watcher with 200 ms debounce, 12 rules, two-phase execution: deterministic collectors first (parallel, ~2 s), then LLM phase bounded at max 2 concurrent. Person-note edits recompute nudges; meeting transcripts trigger briefing regeneration.
 
-**Logos API.** FastAPI on `:8050`. 33 live endpoints across 8 route groups: `data`, `profile`, `agents`, `nudges`, `demos`, `engine`, `working_mode`, `scout`. The `/api/working-mode` endpoint is canonical; `/api/cycle-mode` is a deprecated alias kept during the migration window. Officium intentionally omits council's `fortress` mode (no studio surface).
+**Logos API.** FastAPI on `:8050`. 35 live paths: 33 API paths across 8 route groups (`data`, `profile`, `agents`, `nudges`, `demos`, `engine`, `working_mode`, `scout`) plus `/` and `/metrics`. The `/api/health` endpoint is the canonical minimal health check; `/api/status` is a compatibility alias. The `/api/working-mode` endpoint is canonical; `/api/cycle-mode` is a deprecated alias kept during the migration window. Officium intentionally omits council's `fortress` mode (no studio surface).
 
 **Profile store.** Qdrant collection `profile-facts` (768-dim, `nomic-embed-text-v2-moe`) indexes operator self-awareness facts across six management dimensions (see below).
 
