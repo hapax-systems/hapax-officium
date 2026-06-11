@@ -181,6 +181,21 @@ class TestStatusEndpoint:
         assert resp.status_code == 200
         data = resp.json()
         assert data["healthy"] is True
+        assert data["service"] == "officium-api"
+        assert data["status"] == "healthy"
+
+    async def test_health_returns_same_self_check_contract(self, client):
+        status_resp = await client.get("/api/status")
+        health_resp = await client.get("/api/health")
+        assert health_resp.status_code == 200
+        assert health_resp.json() == status_resp.json()
+
+    async def test_health_and_status_are_in_openapi(self):
+        from logos.api.app import app
+
+        schema = app.openapi()
+        assert "/api/status" in schema["paths"]
+        assert "/api/health" in schema["paths"]
 
 
 # ── Cache age headers ────────────────────────────────────────────────────────
