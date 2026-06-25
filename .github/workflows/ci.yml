@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write
   security-events: write
 
 jobs:
@@ -57,7 +58,7 @@ jobs:
           flags: python
           name: hapax-officium-python
           fail_ci_if_error: false
-          token: ${{ secrets.CODECOV_TOKEN }}
+          use_oidc: true
 
   web-build:
     runs-on: ubuntu-latest

@@ -4,15 +4,34 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-  - package-ecosystem: "pip"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "uv"
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      python-dependencies:
+        patterns:
+          - "*"
+
   - package-ecosystem: "pnpm"
     directory: "/officium-web"
     schedule:
       interval: "weekly"
+    groups:
+      web-dependencies:
+        patterns:
+          - "*"
+
   - package-ecosystem: "pnpm"
     directory: "/vscode"
     schedule:
       interval: "weekly"
+    groups:
+      vscode-dependencies:
+        patterns:
+          - "*"
