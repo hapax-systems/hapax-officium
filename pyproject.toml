@@ -25,7 +25,7 @@ dependencies = [
     "pillow>=11.0.0",
     "playwright>=1.50.0",
     "pydantic>=2.12.5",
-    "pydantic-ai>=1.63.0",
+    "pydantic-ai>=1.99.0,<2",
     "pyyaml>=6.0",
     "qdrant-client>=1.17.0",
     "sse-starlette>=2.0.0",
@@ -62,3 +62,10 @@ markers = [
 
 [tool.ruff]
 extend = "ruff.toml"
+
+[tool.uv]
+override-dependencies = [
+    # moviepy 2.2.1 still declares pillow<12, but the patched Pillow floor is
+    # required for the high-severity Dependabot alerts covered by this task.
+    "pillow>=12.2.0",
+]
