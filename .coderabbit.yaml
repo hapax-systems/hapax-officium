@@ -1,0 +1,46 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: "en-US"
+early_access: false
+
+reviews:
+  profile: "chill"
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  review_details: false
+  auto_review:
+    enabled: true
+    auto_incremental_review: true
+    drafts: false
+    ignore_title_keywords:
+      - "WIP"
+      - "[skip review]"
+    ignore_usernames:
+      - "dependabot[bot]"
+      - "renovate[bot]"
+  path_filters:
+    - "!**/.venv/**"
+    - "!**/.pytest_cache/**"
+    - "!**/.ruff_cache/**"
+    - "!**/coverage.xml"
+    - "!**/coverage.json"
+    - "!**/node_modules/**"
+    - "!**/dist/**"
+    - "!**/build/**"
+  path_instructions:
+    - path: ".github/workflows/**"
+      instructions: |
+        Keep Codecov, Semgrep, CodeRabbit, Claude, and Codex checks advisory unless a governed Hapax task explicitly promotes a stable aggregate check to branch protection.
+    - path: "agents/**"
+      instructions: |
+        Review agent orchestration changes for explicit authority boundaries, audit evidence, bounded retries, and failure escalation.
+    - path: "logos/**"
+      instructions: |
+        Review API and service changes for stable contracts, runtime safety, and no plaintext secret exposure.
+    - path: "officium-web/**"
+      instructions: |
+        Review frontend changes for operator workflow clarity, accessible controls, and consistency with the existing utilitarian dashboard style.
+
+chat:
+  auto_reply: true
