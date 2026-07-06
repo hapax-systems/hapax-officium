@@ -58,6 +58,6 @@ Production builds are served via nginx with SPA routing fallback. API requests p
 
 ## Related
 
-- [hapax-officium](https://github.com/ryanklee/hapax-officium) — Backend logos API + agents
-- [hapax-constitution](https://github.com/ryanklee/hapax-constitution) — Governance architecture
+- [hapax-officium](https://github.com/hapax-systems/hapax-officium) — Backend logos API + agents
+- [hapax-constitution](https://github.com/hapax-systems/hapax-constitution) — Governance architecture
 - [council-web](../council-web/) (in hapax-council) — Equivalent dashboard for the personal operating environment

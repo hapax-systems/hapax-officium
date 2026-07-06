@@ -92,6 +92,6 @@ The extension is bundled with esbuild to a single `dist/extension.js`. Runtime d
 
 | Repo | Purpose |
 |------|---------|
-| [hapax-constitution](https://github.com/ryanklee/hapax-constitution) | Architecture specs, axioms, design authority |
-| [hapax-officium](https://github.com/ryanklee/hapax-officium) | Tier 2 agent implementations + logos API |
-| [hapax-council](https://github.com/ryanklee/hapax-council) | Personal operating environment (logos API on :8051) |
+| [hapax-constitution](https://github.com/hapax-systems/hapax-constitution) | Architecture specs, axioms, design authority |
+| [hapax-officium](https://github.com/hapax-systems/hapax-officium) | Tier 2 agent implementations + logos API |
+| [hapax-council](https://github.com/hapax-systems/hapax-council) | Personal operating environment (logos API on :8051) |
