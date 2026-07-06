@@ -3,8 +3,8 @@
   "@type": "SoftwareSourceCode",
   "name": "hapax-officium",
   "description": "Constituent of the Hapax operating environment. Management decision-support apparatus for a single operator's professional practice. Filesystem-as-bus data model. Research infrastructure published as artifact.",
-  "codeRepository": "https://github.com/ryanklee/hapax-officium",
-  "url": "https://github.com/ryanklee/hapax-officium",
+  "codeRepository": "https://github.com/hapax-systems/hapax-officium",
+  "url": "https://github.com/hapax-systems/hapax-officium",
   "license": "https://polyformproject.org/licenses/strict/1.0.0/",
   "author": [
     {
@@ -24,6 +24,6 @@
     "infrastructure-as-argument"
   ],
   "relatedLink": [
-    "https://github.com/ryanklee/hapax-constitution"
+    "https://github.com/hapax-systems/hapax-constitution"
   ]
 }

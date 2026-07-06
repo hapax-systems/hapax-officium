@@ -22,7 +22,7 @@ Constituent of the Hapax operating environment. Management decision-support appa
 - Manifesto: https://hapax.weblog.lol/hapax-manifesto-v0
 - Refusal Brief: https://hapax.weblog.lol/refusal-brief
 - Cohort Disparity Disclosure: https://hapax.weblog.lol/cohort-disparity-disclosure
-- Constitution: https://github.com/ryanklee/hapax-constitution
+- Constitution: https://github.com/hapax-systems/hapax-constitution
 
 ## Inter-repo position
 
@@ -32,16 +32,16 @@ Management-domain runtime. Logos API on `:8050`. Consumes the constitution and t
 
 ## Description
 
-Management decision-support runtime extracted from [hapax-council](https://github.com/ryanklee/hapax-council) when the management-domain agents proved independently usable. Two roles within the workspace:
+Management decision-support runtime extracted from [hapax-council](https://github.com/hapax-systems/hapax-council) when the management-domain agents proved independently usable. Two roles within the workspace:
 
-1. A second instantiation of the axiom-governance pattern from [hapax-constitution](https://github.com/ryanklee/hapax-constitution), regrounded in management vocabulary (`single_operator`, `decision_support`, `management_safety`).
+1. A second instantiation of the axiom-governance pattern from [hapax-constitution](https://github.com/hapax-systems/hapax-constitution), regrounded in management vocabulary (`single_operator`, `decision_support`, `management_safety`).
 2. Operational infrastructure for the operator's management practice: 17 agents prepare context for 1:1s, generate briefings, track practice patterns, and surface stale conversations. A reactive engine watches the filesystem and cascades downstream work.
 
 The `management_safety` axiom (weight 95, constitutional) constrains output: the system does not generate feedback language, coaching recommendations, or evaluations of individual team members. LLMs prepare context; humans deliver words. T0 commit hooks enforce the constraint.
 
 ## Architecture
 
-**Filesystem-as-bus.** All management state lives as markdown files with YAML frontmatter under `data/` (gitignored). Agents read and write these files; the reactive engine watches via inotify. The pattern is specified in [hapax-constitution](https://github.com/ryanklee/hapax-constitution).
+**Filesystem-as-bus.** All management state lives as markdown files with YAML frontmatter under `data/` (gitignored). Agents read and write these files; the reactive engine watches via inotify. The pattern is specified in [hapax-constitution](https://github.com/hapax-systems/hapax-constitution).
 
 **Reactive engine** (`logos/engine/`). inotify watcher with 200 ms debounce, 12 rules, two-phase execution: deterministic collectors first (parallel, ~2 s), then LLM phase bounded at max 2 concurrent. Person-note edits recompute nudges; meeting transcripts trigger briefing regeneration.
 
@@ -88,7 +88,7 @@ The dimensions replace the 13-dimension scheme used in council (which spans heal
 
 ## Axioms
 
-`axioms/registry.yaml` defines 3 active axioms plus 1 dormant. Domain extensions of [hapax-constitution](https://github.com/ryanklee/hapax-constitution) are imported via the `hapax-sdlc[demo]` package.
+`axioms/registry.yaml` defines 3 active axioms plus 1 dormant. Domain extensions of [hapax-constitution](https://github.com/hapax-systems/hapax-constitution) are imported via the `hapax-sdlc[demo]` package.
 
 | Axiom | Weight | Scope |
 |-------|--------|-------|
@@ -174,12 +174,12 @@ hapax-officium/
 
 | Repository | Role |
 |-----------|------|
-| [hapax-council](https://github.com/ryanklee/hapax-council) | Primary research artifact — voice daemon, grounding system, experiment infrastructure |
-| [hapax-constitution](https://github.com/ryanklee/hapax-constitution) | Governance specification — axioms, implications, canons, precedents |
+| [hapax-council](https://github.com/hapax-systems/hapax-council) | Primary research artifact — voice daemon, grounding system, experiment infrastructure |
+| [hapax-constitution](https://github.com/hapax-systems/hapax-constitution) | Governance specification — axioms, implications, canons, precedents |
 | **hapax-officium** (this repo) | Management decision support |
-| [hapax-watch](https://github.com/ryanklee/hapax-watch) | Wear OS biometric companion |
-| [hapax-phone](https://github.com/ryanklee/hapax-phone) | Android health + context companion |
-| [hapax-mcp](https://github.com/ryanklee/hapax-mcp) | MCP server bridging the logos APIs to Claude Code |
+| [hapax-watch](https://github.com/hapax-systems/hapax-watch) | Wear OS biometric companion |
+| [hapax-phone](https://github.com/hapax-systems/hapax-phone) | Android health + context companion |
+| [hapax-mcp](https://github.com/hapax-systems/hapax-mcp) | MCP server bridging the logos APIs to Claude Code |
 
 ## License
 
