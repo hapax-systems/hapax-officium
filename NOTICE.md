@@ -8,6 +8,10 @@ This repository is part of the Hapax Systems portfolio. Public metadata, issue a
 
 Internal management decision-support runtime published for boundary and governance review.
 
+## Reader value
+
+Shows how management-context software can preserve boundary discipline: preparation and context assembly without people-evaluation or HR-software claims.
+
 ## Claim ceiling
 
 Single-operator management apparatus. Not HR SaaS, not an advice engine, and not a staffed support surface.

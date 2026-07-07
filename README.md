@@ -8,6 +8,10 @@
 
 Internal management decision-support runtime published for boundary and governance review.
 
+## Reader value
+
+Shows how management-context software can preserve boundary discipline: preparation and context assembly without people-evaluation or HR-software claims.
+
 ## Claim ceiling
 
 Single-operator management apparatus. Not HR SaaS, not an advice engine, and not a staffed support surface.
@@ -49,13 +53,13 @@ advice engine, a supported product, or a system that evaluates people.
 
 ## What To Inspect
 
-| Area | Purpose |
-|---|---|
-| `axioms/` | Management-domain governance vocabulary and constraints. |
-| `logos/` | Runtime and API implementation for the internal management surface. |
-| `officium-web/` | Browser interface for local operational visibility. |
-| `vscode/` | Local editor integration. |
-| `tests/` | Regression coverage for the source-visible artifact. |
+| Area | Purpose | Reader value |
+|---|---|---|
+| `axioms/` | Management-domain governance vocabulary and constraints. | Shows which management boundaries are structural rather than prompt-only. |
+| `logos/` | Runtime and API implementation for the internal management surface. | Lets reviewers inspect preparation and context assembly without inferring people-evaluation authority. |
+| `officium-web` | Browser interface for local operational visibility. | Shows the human-facing read surface while keeping it out of public product posture. |
+| `vscode/` | Local editor integration. | Makes the local workflow inspectable without creating a supported extension surface. |
+| `tests/` | Regression coverage for the source-visible artifact. | Gives boundary claims something checkable beyond README prose. |
 
 ## Public Boundary
 
