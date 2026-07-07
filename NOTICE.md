@@ -1,16 +1,16 @@
 # NOTICE - hapax-officium
 
-`hapax-officium` is a constituent of the Hapax operating environment. It is research or boundary infrastructure published as an artifact, not a staffed product or community project.
+`hapax-officium` is internal apparatus in the Hapax Systems portfolio. It is not a public product, hosted service, or community project unless a separate product boundary is ratified.
 
-This repository is part of the Hapax Systems portfolio. Public metadata, issue affordances, and support boundaries are governed by the registry in `hapax-constitution`.
+This repository is part of the Hapax Systems portfolio. Public metadata, issue affordances, and support boundaries follow the registry in `hapax-constitution`.
 
 ## Reader promise
 
-Internal management decision-support runtime published as a source-visible artifact for boundary and governance review.
+Internal management decision-support runtime published for boundary and governance review.
 
 ## Claim ceiling
 
-Single-operator management apparatus; not HR SaaS, not an advice engine, and not a staffed support surface.
+Single-operator management apparatus. Not HR SaaS, not an advice engine, and not a staffed support surface.
 
 ## License and rights
 
@@ -27,7 +27,7 @@ Rendered summary: PolyForm Strict 1.0.0 - source-available, non-distribution, no
 
 ## Portfolio position
 
-Management-domain runtime. Consumes the constitution and the management_governance + management_safety domain axioms without creating a public product boundary.
+Management-domain runtime. Consumes the constitution and management domain axioms without creating a public product boundary.
 
 ---
 
