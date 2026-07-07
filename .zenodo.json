@@ -23,10 +23,5 @@
       "scheme": "url"
     }
   ],
-  "communities": [
-    {
-      "identifier": "hapax-publications"
-    }
-  ],
   "notes": "Repository license: PolyForm Strict 1.0.0 (https://polyformproject.org/licenses/strict/1.0.0/)."
 }
