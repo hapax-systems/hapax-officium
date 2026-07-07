@@ -1,21 +1,21 @@
 # Governance
 
-Governance for this repository is centralised at `hapax-constitution`. There is no per-repo governance body; the single-operator axiom (weight 100) forecloses one.
+`hapax-constitution` governs this repository. This repo has no separate governance body. The single-operator axiom (weight 100) keeps decisions with one operator.
 
 ## Authoritative sources
 
-- Axiom registry: https://github.com/hapax-systems/hapax-constitution/blob/main/axioms/registry.yaml
-- Implications: https://github.com/hapax-systems/hapax-constitution/tree/main/axioms/implications/
-- Precedents: https://github.com/hapax-systems/hapax-constitution/tree/main/axioms/precedents/
-- Axiom registry as Wiki: https://github.com/hapax-systems/hapax-constitution/wiki
+- [Axiom registry](https://github.com/hapax-systems/hapax-constitution/blob/main/axioms/registry.yaml)
+- [Implications](https://github.com/hapax-systems/hapax-constitution/tree/main/axioms/implications/)
+- [Precedents](https://github.com/hapax-systems/hapax-constitution/tree/main/axioms/precedents/)
+- [Axiom registry as Wiki](https://github.com/hapax-systems/hapax-constitution/wiki)
 
 ## Operator
 
-OTO. Single operator, single workstation; governance applies uniformly across the constellation.
+OTO. Single operator, single workstation. The same rules apply across the constellation.
 
 ## Inter-repo position
 
-Management-domain runtime. Logos API on :8050. Consumes the constitution and the management_governance + management_safety domain axioms.
+This repository follows the portfolio role recorded in NOTICE.md and the constitution registry.
 
 ---
 

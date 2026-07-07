@@ -1,12 +1,12 @@
 {
   "title": "hapax-officium",
-  "description": "Constituent of the Hapax operating environment. Management decision-support apparatus for a single operator's professional practice. Filesystem-as-bus data model. Research infrastructure published as artifact.",
+  "description": "Source-visible internal management decision-support runtime for Hapax Systems boundary review. Published as an artifact, not as HR software, SaaS, or an adoption surface.",
   "creators": [
     {
-      "name": "Ryan Kleeberger"
+      "name": "Hapax Systems"
     }
   ],
-  "license": "PolyForm-Strict-1.0.0",
+  "license": "other-closed",
   "access_right": "open",
   "upload_type": "software",
   "keywords": [
@@ -23,9 +23,5 @@
       "scheme": "url"
     }
   ],
-  "communities": [
-    {
-      "identifier": "hapax-publications"
-    }
-  ]
+  "notes": "Repository license: PolyForm Strict 1.0.0 (https://polyformproject.org/licenses/strict/1.0.0/)."
 }

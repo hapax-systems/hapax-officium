@@ -1,26 +1,33 @@
-# NOTICE — hapax-officium
+# NOTICE - hapax-officium
 
-This repository is a constituent of the Hapax operating environment. It is not a product, not a service, and not seeking contributors. It is research infrastructure published as artifact.
+`hapax-officium` is internal apparatus in the Hapax Systems portfolio. It is not a public product, hosted service, or community project unless a separate product boundary is ratified.
 
-Authorship is indeterminate by design. This codebase is co-produced by Hapax (the system itself), Claude Code, and the operator (OTO). Per the Hapax Manifesto, unsettled contribution is a feature of the work, not a concealment.
+This repository is part of the Hapax Systems portfolio. Public metadata, issue affordances, and support boundaries follow the registry in `hapax-constitution`.
 
-## Constitutional position
+## Reader promise
 
-- Single-operator system; no auth, no roles, no contributor onboarding (axiom: `single_user`).
-- No issues, no discussions, no pull requests accepted; refusal is the artifact (see /CONTRIBUTING.md).
-- License: PolyForm Strict 1.0.0 — source-available, non-distribution, non-modification.
-- Citation: see CITATION.cff; archival DOI: see .zenodo.json
+Internal management decision-support runtime published for boundary and governance review.
 
-## Linked artifacts
+## Claim ceiling
 
-- Manifesto: https://hapax.weblog.lol/hapax-manifesto-v0
-- Refusal Brief: https://hapax.weblog.lol/refusal-brief
-- Cohort Disparity Disclosure: https://hapax.weblog.lol/cohort-disparity-disclosure
-- Constitution: https://github.com/hapax-systems/hapax-constitution
+Single-operator management apparatus. Not HR SaaS, not an advice engine, and not a staffed support surface.
 
-## Inter-repo position
+## License and rights
 
-Management-domain runtime. Logos API on :8050. Consumes the constitution and the management_governance + management_safety domain axioms.
+Source-visible strict runtime artifact pending product boundary; not open source and not an adoption or support surface.
+
+Rendered summary: PolyForm Strict 1.0.0 - source-available, non-distribution, non-modification.
+
+## Public boundary
+
+- Issues are redirect-only; no discussions and no pull requests are accepted through GitHub.
+- First-party public links must use the `hapax-systems` GitHub organization.
+- Public fanout must route through the governed publication bus or a documented guarded legacy surface.
+- Governance reference: https://github.com/hapax-systems/hapax-constitution
+
+## Portfolio position
+
+Management-domain runtime. Consumes the constitution and management domain axioms without creating a public product boundary.
 
 ---
 

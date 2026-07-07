@@ -2,15 +2,15 @@
   "@context": "https://w3id.org/codemeta/3.0",
   "@type": "SoftwareSourceCode",
   "name": "hapax-officium",
-  "description": "Constituent of the Hapax operating environment. Management decision-support apparatus for a single operator's professional practice. Filesystem-as-bus data model. Research infrastructure published as artifact.",
+  "description": "Source-visible internal management decision-support runtime for Hapax Systems boundary review. Published as an artifact, not as HR software, SaaS, or an adoption surface.",
   "codeRepository": "https://github.com/hapax-systems/hapax-officium",
   "url": "https://github.com/hapax-systems/hapax-officium",
   "license": "https://polyformproject.org/licenses/strict/1.0.0/",
   "author": [
     {
-      "@type": "Person",
-      "givenName": "Ryan",
-      "familyName": "Kleeberger"
+      "@type": "Organization",
+      "name": "Hapax Systems",
+      "url": "https://github.com/hapax-systems"
     }
   ],
   "applicationCategory": "ResearchInfrastructure",

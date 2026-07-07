@@ -2,12 +2,11 @@ cff-version: 1.2.0
 message: If you use this software in your research, please cite it as below.
 type: software
 title: hapax-officium
-abstract: Constituent of the Hapax operating environment. Management decision-support
-  apparatus for a single operator's professional practice. Filesystem-as-bus data
-  model. Research infrastructure published as artifact.
+abstract: Source-visible internal management decision-support runtime for Hapax Systems
+  boundary review. Published as an artifact, not as HR software, SaaS, or an adoption
+  surface.
 authors:
-- given-names: Ryan
-  family-names: Kleeberger
+- name: Hapax Systems
 repository-code: https://github.com/hapax-systems/hapax-officium
 url: https://github.com/hapax-systems/hapax-officium
 license: PolyForm-Strict-1.0.0

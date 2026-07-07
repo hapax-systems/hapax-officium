@@ -1,182 +1,33 @@
-# Security Architecture
+# Security policy
 
-This document describes the security posture of the logos system.
-It is intended to be honest and precise rather than aspirational.
+A single individual (OTO) operates this repository. It runs in a single-operator deployment with no external users, no auth surface, and no third-party data residency.
 
-## Security Model Overview
+## Disclosure path
 
-This is a **single-operator personal tool**. The `single_operator` constitutional
-axiom (weight: 100, hardcoded) explicitly prohibits authentication, authorization,
-multi-user features, role management, and administrative interfaces. These are not
-missing features -- they are T0 violations that must not be built (see
-`axioms/implications/single-operator.yaml`, implications `su-auth-001`,
-`su-security-001`, `su-admin-001`, `su-feature-001`).
+Submit security disclosures through the contact page. Attach Sigstore-signed disclosure artifacts when applicable:
 
-The security model relies entirely on:
-- Localhost-only network binding (no services exposed beyond 127.0.0.1)
-- OS-level access control (only the operator has access to the machine)
-- GPG-encrypted secret storage (`pass`)
+  https://hapax.weblog.lol/contact
 
-There is no defense-in-depth beyond these layers. If an attacker has local access
-to the machine, they have full access to all data and services.
+Repository surfaces do not publish email by constitutional choice. Sigstore signatures let the operator verify authorship via OpenID Connect without publishing an email address.
 
-## Network Isolation
-
-All Docker services bind exclusively to `127.0.0.1`. No service is reachable from
-the LAN or WAN. Port bindings from `llm-stack/docker-compose.yml`:
-
-| Service          | Host Port(s)            | Container Port(s) |
-|------------------|-------------------------|--------------------|
-| Qdrant           | 127.0.0.1:6433, 6434   | 6333, 6334         |
-| Ollama           | 127.0.0.1:11434        | 11434              |
-| PostgreSQL       | 127.0.0.1:5532         | 5432               |
-| LiteLLM          | 127.0.0.1:4100         | 4000               |
-| ClickHouse       | 127.0.0.1:8223, 9100   | 8123, 9000         |
-| Langfuse Web     | 127.0.0.1:3100         | 3000               |
-| Langfuse Worker  | 127.0.0.1:3130         | 3030               |
-| MinIO            | 127.0.0.1:9190, 9191   | 9000, 9001         |
-| ntfy             | 127.0.0.1:8190         | 80                 |
-| Chatterbox TTS   | 127.0.0.1:4223         | 5123               |
-| Logos Web        | 127.0.0.1:8052         | 80                 |
-| Logos API      | 127.0.0.1:8051         | 8050               |
-
-All containers share a single Docker network (`mgmt-logos`). There is no
-network segmentation between containers -- any container can reach any other
-container by service name. This is acceptable for a single-operator system
-but would be a concern in any shared environment.
-
-## Secrets Management
-
-Secrets are stored in `pass` (GPG-encrypted password store) and loaded into the
-shell environment via `direnv` (see `.envrc`). The pattern:
+Endpoint recheck:
 
 ```bash
-export LITELLM_API_KEY="$(pass show litellm/master-key 2>/dev/null || echo 'changeme')"
+curl -fsSIL https://hapax.weblog.lol/contact
 ```
 
-The `.envrc` file is gitignored. No `.env` files are committed. Docker containers
-receive secrets via environment variables interpolated from the host shell into
-`docker-compose.yml`. Secrets managed this way include:
+## Scope
 
-- `ANTHROPIC_API_KEY` -- Anthropic API access
-- `GOOGLE_API_KEY` -- Google API access
-- `LITELLM_MASTER_KEY` -- LiteLLM gateway authentication
-- `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY` -- Langfuse trace ingestion
-- `LANGFUSE_SALT`, `LANGFUSE_ENCRYPTION_KEY`, `LANGFUSE_NEXTAUTH_SECRET` -- Langfuse internal crypto
-- `POSTGRES_PASSWORD` -- PostgreSQL access
-- `CLICKHOUSE_PASSWORD` -- ClickHouse access
-- `REDIS_AUTH` -- Redis authentication
-- `MINIO_ROOT_PASSWORD` -- MinIO object storage
-- `TAVILY_API_KEY` -- Tavily web search
+Security reports about deployment hardening, architectural choices, or features absent from a single-operator system (multi-tenancy, RBAC, federated identity) are out of scope; the single-operator axiom forecloses these.
 
-The `shared/config.py` module reads `LITELLM_API_KEY` from the environment with a
-fallback default of `"changeme"`. This fallback exists for development convenience
-and would not protect anything in practice -- the LiteLLM proxy is only reachable
-on localhost anyway.
+## Response time
 
-## Data Classification
+Best-effort, single-operator basis; no SLA. The next maintenance window handles critical disclosures such as remote code execution or secret leaks in published commits.
 
-The system handles several categories of data with varying sensitivity:
+## Past advisories
 
-**High sensitivity -- management data (DATA_DIR):**
-People notes, coaching records, feedback records, 1:1 prep documents, meeting
-notes, performance review evidence. This is HR-adjacent content about real team
-members. Stored as markdown files with YAML frontmatter on the local filesystem.
-In Docker, mounted as a bind mount at `/app/data/`.
+None to date.
 
-**Medium sensitivity -- LLM traces (Langfuse):**
-Every LLM call is traced through Langfuse, including prompts and responses. These
-traces contain synthesized management context -- team snapshots, briefings, prep
-documents. Stored in PostgreSQL + ClickHouse + MinIO within the Docker stack.
+---
 
-**Medium sensitivity -- operator profile (Qdrant):**
-The management profiler generates a 6-dimension self-assessment of the operator's
-management patterns. Stored as vector embeddings in Qdrant. The profile describes
-the operator, never team members.
-
-**Low sensitivity -- vector embeddings (Qdrant):**
-Derived representations of documents, knowledge base content. Not directly
-human-readable but could be used for similarity-based reconstruction.
-
-**Low sensitivity -- infrastructure state:**
-Service health, model availability, collection statistics. Generated by the
-introspect and system_check agents.
-
-## LLM Data Flow
-
-All LLM calls from agents route through the LiteLLM proxy at `localhost:4100`,
-which forwards to Anthropic's API (Claude models) or local Ollama. The call chain:
-
-```
-Agent -> LiteLLM (localhost:4100) -> Anthropic API (cloud)
-                                  -> Ollama (localhost:11434, local GPU)
-```
-
-LiteLLM traces every call to Langfuse for observability. Management data (people
-notes, coaching, feedback) is included in LLM prompts when agents synthesize
-prep documents, briefings, and team snapshots. This means sensitive HR-adjacent
-content is sent to Anthropic's API. Local Ollama models handle embeddings only
-(`nomic-embed-text`), not management synthesis.
-
-Anthropic's data retention and usage policies apply to all cloud LLM calls.
-
-## Container Isolation
-
-All containers run on a single shared Docker network (`mgmt-logos`). Resource
-limits are set on every container:
-
-| Service          | Memory Limit |
-|------------------|-------------|
-| Qdrant           | 4 GB        |
-| Ollama           | 20 GB       |
-| PostgreSQL       | 4 GB        |
-| LiteLLM          | 2 GB        |
-| ClickHouse       | 4 GB        |
-| Langfuse Web     | 2 GB        |
-| Langfuse Worker  | 2 GB        |
-| MinIO            | 1 GB        |
-| Redis            | 512 MB      |
-| ntfy             | 256 MB      |
-| Chatterbox TTS   | 4 GB        |
-| Logos Web        | 256 MB      |
-
-Images use pinned digests (sha256) for reproducibility. The Ollama container has
-GPU passthrough via `nvidia-container-toolkit`. Data is persisted in named Docker
-volumes (`mgmt_qdrant_data`, `mgmt_postgres_data`, etc.) and bind mounts for
-configuration files (read-only where possible).
-
-## What This System Is NOT
-
-- **Not enterprise software.** Built for one person on one machine.
-- **Not multi-tenant.** The single_operator axiom constitutionally prohibits it.
-- **Not designed for network exposure.** If any port is exposed beyond localhost,
-  the entire security model breaks.
-- **Not audited.** No external security review has been performed.
-- **Not compliant with any framework.** SOC 2, ISO 27001, GDPR -- none apply.
-  This is a personal tool on a personal workstation.
-
-## Known Limitations
-
-- **No TLS between services.** All inter-service communication is plaintext HTTP
-  over the Docker network and localhost. Acceptable because nothing leaves the
-  machine, but a compromised container could sniff traffic.
-- **No authentication on the logos API.** Port 8051 serves 32 REST endpoints
-  with no auth. Protected only by the 127.0.0.1 binding.
-- **No encryption at rest.** Qdrant, PostgreSQL, ClickHouse, and MinIO store data
-  unencrypted on Docker volumes. Full-disk encryption (if enabled at the OS level)
-  is the only protection.
-- **No rate limiting.** Any localhost process can make unlimited requests to any
-  service.
-- **Sensitive data in LLM prompts.** Management data about real team members is
-  sent to Anthropic's cloud API. The operator accepts this tradeoff.
-- **Fallback credentials in code.** `shared/config.py` defaults `LITELLM_API_KEY`
-  to `"changeme"` if the environment variable is unset. This is a development
-  convenience, not a security control.
-- **Shared Docker network.** All containers can communicate freely. A compromised
-  container could reach any other service.
-
-## Responsible Disclosure
-
-This is a personal project. There is no bug bounty program or security team.
-If you find a security issue, open a GitHub issue or contact the repository owner
-directly.
+This file is rendered from `hapax-constitution/sdlc/render/`. Edits are overwritten on next render.
