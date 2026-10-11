@@ -54,6 +54,7 @@
 ```python
 # tests/test_config_mutable.py
 """Tests for mutable DATA_DIR config holder."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -103,6 +104,7 @@ class TestMutableConfig:
         """HAPAX_DATA_DIR env var is respected at init time."""
         with patch.dict("os.environ", {"HAPAX_DATA_DIR": str(tmp_path)}):
             from shared.config import _Config
+
             c = _Config()
             assert c.data_dir == tmp_path
 ```
@@ -130,8 +132,9 @@ class _Config:
     """
 
     def __init__(self) -> None:
-        self._data_dir = Path(os.environ.get("HAPAX_DATA_DIR",
-            str(Path(__file__).resolve().parent.parent / "data")))
+        self._data_dir = Path(
+            os.environ.get("HAPAX_DATA_DIR", str(Path(__file__).resolve().parent.parent / "data"))
+        )
         self._original_data_dir = self._data_dir
 
     @property
@@ -277,12 +280,14 @@ In `logos/engine/__init__.py` lines 37-40, change:
 ```python
 if data_dir is None:
     from shared.config import DATA_DIR
+
     data_dir = DATA_DIR
 ```
 to:
 ```python
 if data_dir is None:
     from shared.config import config
+
     data_dir = config.data_dir
 ```
 
@@ -317,6 +322,7 @@ git commit -m "refactor: migrate all DATA_DIR consumers to config.data_dir"
 ```python
 # tests/test_simulation_models.py
 """Tests for simulation Pydantic models."""
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -386,6 +392,7 @@ class TestSimManifest:
     def test_yaml_roundtrip(self):
         """Manifest can serialize to YAML for .sim-manifest.yaml."""
         import yaml
+
         m = SimManifest(
             id="test-yaml",
             role="engineering-manager",
@@ -411,6 +418,7 @@ Expected: FAIL — module doesn't exist
 ```python
 # shared/simulation_models.py
 """Pydantic models for simulation manifests and configuration."""
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -421,6 +429,7 @@ from pydantic import BaseModel, Field
 
 class SimStatus(StrEnum):
     """Simulation lifecycle status."""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -429,6 +438,7 @@ class SimStatus(StrEnum):
 
 class SimManifest(BaseModel):
     """Metadata for a simulation run, persisted as .sim-manifest.yaml."""
+
     id: str
     role: str
     variant: str | None = None
@@ -470,6 +480,7 @@ git commit -m "feat: add Pydantic models for simulation manifests"
 ```python
 # tests/test_simulation_infra.py
 """Tests for simulation directory lifecycle."""
+
 from __future__ import annotations
 
 import yaml
@@ -501,10 +512,22 @@ class TestCreateSimulation:
         assert (sim_dir / ".sim-manifest.yaml").is_file()
 
         # Check standard subdirectories exist
-        for subdir in ("people", "coaching", "feedback", "meetings",
-                       "okrs", "goals", "incidents", "postmortem-actions",
-                       "review-cycles", "status-reports", "decisions", "references",
-                       "inbox", "processed"):
+        for subdir in (
+            "people",
+            "coaching",
+            "feedback",
+            "meetings",
+            "okrs",
+            "goals",
+            "incidents",
+            "postmortem-actions",
+            "review-cycles",
+            "status-reports",
+            "decisions",
+            "references",
+            "inbox",
+            "processed",
+        ):
             assert (sim_dir / subdir).is_dir()
 
     def test_manifest_written_correctly(self, tmp_path: Path):
@@ -527,12 +550,22 @@ class TestCreateSimulation:
 
     def test_unique_directory_names(self, tmp_path: Path):
         """Two calls create distinct directories."""
-        d1 = create_simulation(base_dir=tmp_path, role="em", window="7d",
-                               start_date="2026-03-01", end_date="2026-03-07",
-                               seed="demo-data/")
-        d2 = create_simulation(base_dir=tmp_path, role="em", window="7d",
-                               start_date="2026-03-01", end_date="2026-03-07",
-                               seed="demo-data/")
+        d1 = create_simulation(
+            base_dir=tmp_path,
+            role="em",
+            window="7d",
+            start_date="2026-03-01",
+            end_date="2026-03-07",
+            seed="demo-data/",
+        )
+        d2 = create_simulation(
+            base_dir=tmp_path,
+            role="em",
+            window="7d",
+            start_date="2026-03-01",
+            end_date="2026-03-07",
+            seed="demo-data/",
+        )
         assert d1 != d2
 
 
@@ -588,9 +621,14 @@ class TestManifestIO:
 
     def test_save_updates_existing(self, tmp_path: Path):
         """save_manifest overwrites existing manifest file."""
-        m1 = SimManifest(id="v1", role="em", window="7d",
-                         start_date="2026-03-01", end_date="2026-03-07",
-                         seed="demo-data/")
+        m1 = SimManifest(
+            id="v1",
+            role="em",
+            window="7d",
+            start_date="2026-03-01",
+            end_date="2026-03-07",
+            seed="demo-data/",
+        )
         save_manifest(tmp_path, m1)
 
         m2 = m1.model_copy(update={"status": SimStatus.RUNNING, "ticks_completed": 5})
@@ -616,6 +654,7 @@ class TestCleanup:
     def test_cleanup_refuses_non_simulation_dir(self, tmp_path: Path):
         """cleanup_simulation() raises if directory lacks .sim-manifest.yaml."""
         import pytest
+
         regular_dir = tmp_path / "not-a-sim"
         regular_dir.mkdir()
 
@@ -631,11 +670,19 @@ class TestListSimulations:
             d = tmp_path / name
             d.mkdir()
             (d / ".sim-manifest.yaml").write_text(
-                yaml.dump({"simulation": SimManifest(
-                    id=name, role="em", window="7d",
-                    start_date="2026-03-01", end_date="2026-03-07",
-                    seed="demo-data/"
-                ).model_dump(mode="json")}))
+                yaml.dump(
+                    {
+                        "simulation": SimManifest(
+                            id=name,
+                            role="em",
+                            window="7d",
+                            start_date="2026-03-01",
+                            end_date="2026-03-07",
+                            seed="demo-data/",
+                        ).model_dump(mode="json")
+                    }
+                )
+            )
 
         # Create a non-simulation dir
         (tmp_path / "regular-dir").mkdir()
@@ -654,6 +701,7 @@ Expected: FAIL — `shared.simulation` doesn't exist
 ```python
 # shared/simulation.py
 """Simulation directory lifecycle — create, seed, manifest I/O, cleanup."""
+
 from __future__ import annotations
 
 import logging
@@ -669,10 +717,20 @@ _log = logging.getLogger(__name__)
 
 # Standard subdirectories in a simulation DATA_DIR
 _SUBDIRS = (
-    "people", "coaching", "feedback", "meetings",
-    "okrs", "goals", "incidents", "postmortem-actions",
-    "review-cycles", "status-reports", "decisions", "references",
-    "inbox", "processed",
+    "people",
+    "coaching",
+    "feedback",
+    "meetings",
+    "okrs",
+    "goals",
+    "incidents",
+    "postmortem-actions",
+    "review-cycles",
+    "status-reports",
+    "decisions",
+    "references",
+    "inbox",
+    "processed",
 )
 
 _MANIFEST_FILE = ".sim-manifest.yaml"
@@ -1032,6 +1090,7 @@ git commit -m "feat: add role matrix and scenario definitions for simulator"
 ```python
 # tests/test_engine_pause.py
 """Tests for engine pause/resume during simulation context switching."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -1133,6 +1192,7 @@ async def pause(self) -> None:
     self.paused = True
     _log.info("ReactiveEngine paused")
 
+
 async def resume(self) -> None:
     """Resume the engine after a pause."""
     if not self.paused:
@@ -1185,6 +1245,7 @@ git commit -m "feat: add engine pause/resume for simulation context switching"
 ```python
 # tests/test_simulation_context_api.py
 """Tests for POST /api/engine/simulation-context endpoint."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -1199,6 +1260,7 @@ from cockpit.api.routes.engine import router, set_engine
 class TestSimulationContextEndpoint:
     def _make_client(self, engine=None):
         from fastapi import FastAPI
+
         app = FastAPI()
         app.include_router(router)
         if engine is not None:
@@ -1220,8 +1282,10 @@ class TestSimulationContextEndpoint:
         engine.pause = AsyncMock()
         client = self._make_client(engine)
 
-        with patch("cockpit.api.routes.engine.config") as mock_config, \
-             patch("cockpit.api.routes.engine.cache") as mock_cache:
+        with (
+            patch("cockpit.api.routes.engine.config") as mock_config,
+            patch("cockpit.api.routes.engine.cache") as mock_cache,
+        ):
             mock_cache.refresh = AsyncMock()
             response = client.post(
                 "/api/engine/simulation-context",
@@ -1238,8 +1302,10 @@ class TestSimulationContextEndpoint:
         engine.resume = AsyncMock()
         client = self._make_client(engine)
 
-        with patch("cockpit.api.routes.engine.config") as mock_config, \
-             patch("cockpit.api.routes.engine.cache") as mock_cache:
+        with (
+            patch("cockpit.api.routes.engine.config") as mock_config,
+            patch("cockpit.api.routes.engine.cache") as mock_cache,
+        ):
             mock_cache.refresh = AsyncMock()
             response = client.post(
                 "/api/engine/simulation-context",
@@ -1279,6 +1345,7 @@ class TestSimulationContextEndpoint:
         """POST when engine is None returns error."""
         set_engine(None)
         from fastapi import FastAPI
+
         app = FastAPI()
         app.include_router(router)
         client = TestClient(app)
@@ -1336,7 +1403,9 @@ async def set_simulation_context(req: SimulationContextRequest) -> dict:
     if not sim_path.is_dir():
         raise HTTPException(status_code=400, detail=f"Directory does not exist: {req.sim_dir}")
     if not (sim_path / ".sim-manifest.yaml").is_file():
-        raise HTTPException(status_code=400, detail=f"Not a simulation directory (no .sim-manifest.yaml)")
+        raise HTTPException(
+            status_code=400, detail=f"Not a simulation directory (no .sim-manifest.yaml)"
+        )
 
     # Activate simulation context
     await engine.pause()
@@ -1374,6 +1443,7 @@ A validation test ensuring bidirectional consistency between `workflow-semantics
 ```python
 # tests/test_workflow_semantics.py
 """Validate workflow-semantics.yaml against demo-data/ corpus."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -1389,17 +1459,12 @@ _DEMO_DATA = Path(__file__).resolve().parent.parent / "demo-data"
 class TestWorkflowSemanticsConsistency:
     def test_semantics_file_exists(self):
         """workflow-semantics.yaml exists."""
-        assert _WORKFLOW_SEMANTICS.is_file(), (
-            f"Missing {_WORKFLOW_SEMANTICS}"
-        )
+        assert _WORKFLOW_SEMANTICS.is_file(), f"Missing {_WORKFLOW_SEMANTICS}"
 
     def test_all_demo_data_types_have_semantics(self):
         """Every document type in demo-data/ has a workflow-semantics entry."""
         semantics = yaml.safe_load(_WORKFLOW_SEMANTICS.read_text())
-        defined_subdirs = {
-            w["subdirectory"].rstrip("/")
-            for w in semantics["workflows"].values()
-        }
+        defined_subdirs = {w["subdirectory"].rstrip("/") for w in semantics["workflows"].values()}
 
         # Subdirectories in demo-data that contain .md files with type: frontmatter
         data_subdirs = set()
@@ -1409,8 +1474,15 @@ class TestWorkflowSemanticsConsistency:
                 data_subdirs.add(rel.parts[0])
 
         # Exclude non-workflow directories
-        non_workflow = {"references", "1on1-prep", "inbox", "processed",
-                        "briefings", "status-updates", "review-prep"}
+        non_workflow = {
+            "references",
+            "1on1-prep",
+            "inbox",
+            "processed",
+            "briefings",
+            "status-updates",
+            "review-prep",
+        }
         data_subdirs -= non_workflow
 
         missing = data_subdirs - defined_subdirs

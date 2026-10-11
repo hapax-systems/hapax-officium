@@ -106,8 +106,9 @@ Guided creation: VS Code input boxes → LLM assists structuring → creates mar
 
 **config.py** — new constant:
 ```python
-DATA_DIR: Path = Path(os.environ.get("HAPAX_DATA_DIR",
-    str(Path(__file__).resolve().parent.parent / "data")))
+DATA_DIR: Path = Path(
+    os.environ.get("HAPAX_DATA_DIR", str(Path(__file__).resolve().parent.parent / "data"))
+)
 ```
 
 **management_bridge.py** — rehydrate to read from `DATA_DIR`:

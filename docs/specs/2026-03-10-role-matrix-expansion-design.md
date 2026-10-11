@@ -213,7 +213,12 @@ for wf in profile["workflows"]:
     if effective != raw:
         _log.warning(
             "Clamped %s modifier: %.2f -> %.2f (role=%.1f, scenario=%.1f, org=%.1f)",
-            wf["name"], raw, effective, role_mod, scenario_mod, org_mod,
+            wf["name"],
+            raw,
+            effective,
+            role_mod,
+            scenario_mod,
+            org_mod,
         )
 
     wf["effective_weight"] = effective
@@ -231,9 +236,11 @@ for wf in profile["workflows"]:
 ```python
 if profile.get("org_context"):
     org = profile["org_context"]
-    lines.append(f"Organization: {org.get('company_stage', 'growth')} stage, "
-                 f"{org.get('headcount_band', 'unknown')} employees, "
-                 f"{org.get('industry', 'technology')}")
+    lines.append(
+        f"Organization: {org.get('company_stage', 'growth')} stage, "
+        f"{org.get('headcount_band', 'unknown')} employees, "
+        f"{org.get('industry', 'technology')}"
+    )
     for priority in org.get("strategic_context", []):
         lines.append(f"  Strategic priority: {priority}")
     lines.append("")
@@ -260,8 +267,7 @@ def validate_distribution(
         scaled_hi = int(hi * scale + 0.5)
         if actual < scaled_lo or actual > scaled_hi:
             warnings.append(
-                f"{wf_type}: {actual} events in {window_days}d "
-                f"(expected {scaled_lo}-{scaled_hi})"
+                f"{wf_type}: {actual} events in {window_days}d (expected {scaled_lo}-{scaled_hi})"
             )
     return warnings
 ```
@@ -298,9 +304,12 @@ org_dossier_path = config_dir / "org-dossier.yaml"
 org = load_org_dossier(org_dossier_path) if org_dossier_path.is_file() else None
 
 profile = compose_role_profile(
-    role_name=role, variant=variant,
-    roles=roles, workflows=workflows,
-    scenario=scenario_def, org=org,
+    role_name=role,
+    variant=variant,
+    roles=roles,
+    workflows=workflows,
+    scenario=scenario_def,
+    org=org,
 )
 ```
 

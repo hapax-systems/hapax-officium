@@ -36,6 +36,7 @@
 
 ```python
 """Tests for logos/data/okrs.py — OKR state collection."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -54,20 +55,39 @@ class TestCollectOKRs:
     def test_active_okr_with_key_results(self, tmp_path: Path):
         from cockpit.data.okrs import collect_okr_state
 
-        _write_md(tmp_path / "okrs" / "2026-q1-platform.md", {
-            "type": "okr",
-            "scope": "team",
-            "team": "Platform",
-            "quarter": "2026-Q1",
-            "status": "active",
-            "objective": "Improve reliability",
-            "key-results": [
-                {"id": "kr1", "description": "Reduce P99", "target": 200, "current": 310,
-                 "unit": "ms", "direction": "decrease", "confidence": 0.6, "last-updated": "2026-02-28"},
-                {"id": "kr2", "description": "Uptime", "target": 99.95, "current": 99.91,
-                 "unit": "percent", "direction": "increase", "confidence": 0.8, "last-updated": "2026-03-05"},
-            ],
-        })
+        _write_md(
+            tmp_path / "okrs" / "2026-q1-platform.md",
+            {
+                "type": "okr",
+                "scope": "team",
+                "team": "Platform",
+                "quarter": "2026-Q1",
+                "status": "active",
+                "objective": "Improve reliability",
+                "key-results": [
+                    {
+                        "id": "kr1",
+                        "description": "Reduce P99",
+                        "target": 200,
+                        "current": 310,
+                        "unit": "ms",
+                        "direction": "decrease",
+                        "confidence": 0.6,
+                        "last-updated": "2026-02-28",
+                    },
+                    {
+                        "id": "kr2",
+                        "description": "Uptime",
+                        "target": 99.95,
+                        "current": 99.91,
+                        "unit": "percent",
+                        "direction": "increase",
+                        "confidence": 0.8,
+                        "last-updated": "2026-03-05",
+                    },
+                ],
+            },
+        )
 
         with patch("cockpit.data.okrs.DATA_DIR", tmp_path):
             snap = collect_okr_state()
@@ -83,10 +103,17 @@ class TestCollectOKRs:
     def test_scored_okr_excluded_from_active(self, tmp_path: Path):
         from cockpit.data.okrs import collect_okr_state
 
-        _write_md(tmp_path / "okrs" / "2025-q4-done.md", {
-            "type": "okr", "status": "scored", "objective": "Old OKR",
-            "quarter": "2025-Q4", "score": 0.7, "scored-at": "2026-01-05",
-        })
+        _write_md(
+            tmp_path / "okrs" / "2025-q4-done.md",
+            {
+                "type": "okr",
+                "status": "scored",
+                "objective": "Old OKR",
+                "quarter": "2025-Q4",
+                "score": 0.7,
+                "scored-at": "2026-01-05",
+            },
+        )
 
         with patch("cockpit.data.okrs.DATA_DIR", tmp_path):
             snap = collect_okr_state()
@@ -97,16 +124,33 @@ class TestCollectOKRs:
     def test_at_risk_kr_counted(self, tmp_path: Path):
         from cockpit.data.okrs import collect_okr_state
 
-        _write_md(tmp_path / "okrs" / "2026-q1-risk.md", {
-            "type": "okr", "status": "active", "objective": "Risky",
-            "quarter": "2026-Q1",
-            "key-results": [
-                {"id": "kr1", "description": "Bad", "target": 100, "current": 10,
-                 "confidence": 0.3, "last-updated": "2026-03-01"},
-                {"id": "kr2", "description": "Ok", "target": 100, "current": 80,
-                 "confidence": 0.9, "last-updated": "2026-03-01"},
-            ],
-        })
+        _write_md(
+            tmp_path / "okrs" / "2026-q1-risk.md",
+            {
+                "type": "okr",
+                "status": "active",
+                "objective": "Risky",
+                "quarter": "2026-Q1",
+                "key-results": [
+                    {
+                        "id": "kr1",
+                        "description": "Bad",
+                        "target": 100,
+                        "current": 10,
+                        "confidence": 0.3,
+                        "last-updated": "2026-03-01",
+                    },
+                    {
+                        "id": "kr2",
+                        "description": "Ok",
+                        "target": 100,
+                        "current": 80,
+                        "confidence": 0.9,
+                        "last-updated": "2026-03-01",
+                    },
+                ],
+            },
+        )
 
         with patch("cockpit.data.okrs.DATA_DIR", tmp_path):
             snap = collect_okr_state()
@@ -117,14 +161,25 @@ class TestCollectOKRs:
     def test_stale_kr_detected(self, tmp_path: Path):
         from cockpit.data.okrs import collect_okr_state
 
-        _write_md(tmp_path / "okrs" / "2026-q1-stale.md", {
-            "type": "okr", "status": "active", "objective": "Stale",
-            "quarter": "2026-Q1",
-            "key-results": [
-                {"id": "kr1", "description": "Old", "target": 100, "current": 50,
-                 "confidence": 0.7, "last-updated": "2026-01-01"},
-            ],
-        })
+        _write_md(
+            tmp_path / "okrs" / "2026-q1-stale.md",
+            {
+                "type": "okr",
+                "status": "active",
+                "objective": "Stale",
+                "quarter": "2026-Q1",
+                "key-results": [
+                    {
+                        "id": "kr1",
+                        "description": "Old",
+                        "target": 100,
+                        "current": 50,
+                        "confidence": 0.7,
+                        "last-updated": "2026-01-01",
+                    },
+                ],
+            },
+        )
 
         with patch("cockpit.data.okrs.DATA_DIR", tmp_path):
             snap = collect_okr_state()
@@ -144,10 +199,15 @@ class TestCollectOKRs:
     def test_no_key_results_field(self, tmp_path: Path):
         from cockpit.data.okrs import collect_okr_state
 
-        _write_md(tmp_path / "okrs" / "2026-q1-bare.md", {
-            "type": "okr", "status": "active", "objective": "Bare OKR",
-            "quarter": "2026-Q1",
-        })
+        _write_md(
+            tmp_path / "okrs" / "2026-q1-bare.md",
+            {
+                "type": "okr",
+                "status": "active",
+                "objective": "Bare OKR",
+                "quarter": "2026-Q1",
+            },
+        )
 
         with patch("cockpit.data.okrs.DATA_DIR", tmp_path):
             snap = collect_okr_state()
@@ -158,9 +218,13 @@ class TestCollectOKRs:
     def test_wrong_type_skipped(self, tmp_path: Path):
         from cockpit.data.okrs import collect_okr_state
 
-        _write_md(tmp_path / "okrs" / "not-okr.md", {
-            "type": "person", "name": "Alice",
-        })
+        _write_md(
+            tmp_path / "okrs" / "not-okr.md",
+            {
+                "type": "person",
+                "name": "Alice",
+            },
+        )
 
         with patch("cockpit.data.okrs.DATA_DIR", tmp_path):
             snap = collect_okr_state()
@@ -183,6 +247,7 @@ Create `logos/data/okrs.py`:
 Deterministic, no LLM calls. Parses OKR markdown files with nested
 key-results in YAML frontmatter. Computes at-risk and stale KR counts.
 """
+
 from __future__ import annotations
 
 import logging
@@ -256,17 +321,19 @@ def _parse_key_results(raw: list | None) -> list[KeyResultState]:
         conf_raw = item.get("confidence")
         confidence = float(conf_raw) if conf_raw is not None else None
 
-        results.append(KeyResultState(
-            id=str(item.get("id", "")),
-            description=str(item.get("description", "")),
-            target=float(item.get("target", 0)),
-            current=float(item.get("current", 0)),
-            unit=str(item.get("unit", "")),
-            direction=str(item.get("direction", "increase")),
-            confidence=confidence,
-            last_updated=last_updated,
-            stale=stale,
-        ))
+        results.append(
+            KeyResultState(
+                id=str(item.get("id", "")),
+                description=str(item.get("description", "")),
+                target=float(item.get("target", 0)),
+                current=float(item.get("current", 0)),
+                unit=str(item.get("unit", "")),
+                direction=str(item.get("direction", "increase")),
+                confidence=confidence,
+                last_updated=last_updated,
+                stale=stale,
+            )
+        )
     return results
 
 
@@ -338,6 +405,7 @@ git commit -m "feat: add OKR collector with nested key-result parsing"
 
 ```python
 """Tests for logos/data/smart_goals.py — SMART goal collection."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -356,17 +424,25 @@ class TestCollectSmartGoals:
     def test_active_goal(self, tmp_path: Path):
         from cockpit.data.smart_goals import collect_smart_goal_state
 
-        _write_md(tmp_path / "goals" / "sarah-principal.md", {
-            "type": "goal", "framework": "smart", "person": "Sarah Chen",
-            "status": "active", "category": "career-development",
-            "created": "2026-01-15", "target-date": "2026-06-30",
-            "last-reviewed": "2026-03-01", "review-cadence": "quarterly",
-            "specific": "Lead cross-team review",
-            "measurable": "Approved by 3+ leads",
-            "achievable": "Has led single-team reviews",
-            "relevant": "Aligns with promo criteria",
-            "time-bound": "Q2 2026",
-        })
+        _write_md(
+            tmp_path / "goals" / "sarah-principal.md",
+            {
+                "type": "goal",
+                "framework": "smart",
+                "person": "Sarah Chen",
+                "status": "active",
+                "category": "career-development",
+                "created": "2026-01-15",
+                "target-date": "2026-06-30",
+                "last-reviewed": "2026-03-01",
+                "review-cadence": "quarterly",
+                "specific": "Lead cross-team review",
+                "measurable": "Approved by 3+ leads",
+                "achievable": "Has led single-team reviews",
+                "relevant": "Aligns with promo criteria",
+                "time-bound": "Q2 2026",
+            },
+        )
 
         with patch("cockpit.data.smart_goals.DATA_DIR", tmp_path):
             snap = collect_smart_goal_state()
@@ -378,11 +454,17 @@ class TestCollectSmartGoals:
     def test_overdue_goal(self, tmp_path: Path):
         from cockpit.data.smart_goals import collect_smart_goal_state
 
-        _write_md(tmp_path / "goals" / "jordan-overdue.md", {
-            "type": "goal", "framework": "smart", "person": "Jordan Kim",
-            "status": "active", "target-date": "2026-01-15",
-            "specific": "Past due goal",
-        })
+        _write_md(
+            tmp_path / "goals" / "jordan-overdue.md",
+            {
+                "type": "goal",
+                "framework": "smart",
+                "person": "Jordan Kim",
+                "status": "active",
+                "target-date": "2026-01-15",
+                "specific": "Past due goal",
+            },
+        )
 
         with patch("cockpit.data.smart_goals.DATA_DIR", tmp_path):
             snap = collect_smart_goal_state()
@@ -393,11 +475,18 @@ class TestCollectSmartGoals:
     def test_review_overdue(self, tmp_path: Path):
         from cockpit.data.smart_goals import collect_smart_goal_state
 
-        _write_md(tmp_path / "goals" / "marcus-stale.md", {
-            "type": "goal", "framework": "smart", "person": "Marcus",
-            "status": "active", "last-reviewed": "2025-10-01",
-            "review-cadence": "quarterly", "specific": "Stale review",
-        })
+        _write_md(
+            tmp_path / "goals" / "marcus-stale.md",
+            {
+                "type": "goal",
+                "framework": "smart",
+                "person": "Marcus",
+                "status": "active",
+                "last-reviewed": "2025-10-01",
+                "review-cadence": "quarterly",
+                "specific": "Stale review",
+            },
+        )
 
         with patch("cockpit.data.smart_goals.DATA_DIR", tmp_path):
             snap = collect_smart_goal_state()
@@ -408,10 +497,16 @@ class TestCollectSmartGoals:
     def test_completed_excluded_from_active(self, tmp_path: Path):
         from cockpit.data.smart_goals import collect_smart_goal_state
 
-        _write_md(tmp_path / "goals" / "done.md", {
-            "type": "goal", "framework": "smart", "person": "Alice",
-            "status": "completed", "specific": "Done goal",
-        })
+        _write_md(
+            tmp_path / "goals" / "done.md",
+            {
+                "type": "goal",
+                "framework": "smart",
+                "person": "Alice",
+                "status": "completed",
+                "specific": "Done goal",
+            },
+        )
 
         with patch("cockpit.data.smart_goals.DATA_DIR", tmp_path):
             snap = collect_smart_goal_state()
@@ -430,9 +525,13 @@ class TestCollectSmartGoals:
     def test_wrong_type_skipped(self, tmp_path: Path):
         from cockpit.data.smart_goals import collect_smart_goal_state
 
-        _write_md(tmp_path / "goals" / "not-goal.md", {
-            "type": "person", "name": "Alice",
-        })
+        _write_md(
+            tmp_path / "goals" / "not-goal.md",
+            {
+                "type": "person",
+                "name": "Alice",
+            },
+        )
 
         with patch("cockpit.data.smart_goals.DATA_DIR", tmp_path):
             snap = collect_smart_goal_state()
@@ -452,6 +551,7 @@ Create `logos/data/smart_goals.py`:
 Deterministic, no LLM calls. Tracks individual development goals
 with SMART framework fields, deadline tracking, and review cadence.
 """
+
 from __future__ import annotations
 
 import logging
@@ -602,6 +702,7 @@ git commit -m "feat: add SMART goal collector with deadline and review tracking"
 
 ```python
 """Tests for logos/data/incidents.py — incident state collection."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -620,13 +721,18 @@ class TestCollectIncidents:
     def test_open_incident(self, tmp_path: Path):
         from cockpit.data.incidents import collect_incident_state
 
-        _write_md(tmp_path / "incidents" / "2026-03-05-outage.md", {
-            "type": "incident", "title": "API outage",
-            "severity": "sev1", "status": "mitigated",
-            "detected": "2026-03-05T14:00:00",
-            "owner": "Marcus Johnson",
-            "teams-affected": ["Platform"],
-        })
+        _write_md(
+            tmp_path / "incidents" / "2026-03-05-outage.md",
+            {
+                "type": "incident",
+                "title": "API outage",
+                "severity": "sev1",
+                "status": "mitigated",
+                "detected": "2026-03-05T14:00:00",
+                "owner": "Marcus Johnson",
+                "teams-affected": ["Platform"],
+            },
+        )
 
         with patch("cockpit.data.incidents.DATA_DIR", tmp_path):
             snap = collect_incident_state()
@@ -638,10 +744,15 @@ class TestCollectIncidents:
     def test_closed_incident_not_open(self, tmp_path: Path):
         from cockpit.data.incidents import collect_incident_state
 
-        _write_md(tmp_path / "incidents" / "2026-02-15-resolved.md", {
-            "type": "incident", "title": "Resolved",
-            "severity": "sev2", "status": "closed",
-        })
+        _write_md(
+            tmp_path / "incidents" / "2026-02-15-resolved.md",
+            {
+                "type": "incident",
+                "title": "Resolved",
+                "severity": "sev2",
+                "status": "closed",
+            },
+        )
 
         with patch("cockpit.data.incidents.DATA_DIR", tmp_path):
             snap = collect_incident_state()
@@ -652,10 +763,15 @@ class TestCollectIncidents:
     def test_missing_postmortem_counted(self, tmp_path: Path):
         from cockpit.data.incidents import collect_incident_state
 
-        _write_md(tmp_path / "incidents" / "2026-03-01-no-pm.md", {
-            "type": "incident", "title": "No postmortem",
-            "severity": "sev2", "status": "mitigated",
-        })
+        _write_md(
+            tmp_path / "incidents" / "2026-03-01-no-pm.md",
+            {
+                "type": "incident",
+                "title": "No postmortem",
+                "severity": "sev2",
+                "status": "mitigated",
+            },
+        )
 
         with patch("cockpit.data.incidents.DATA_DIR", tmp_path):
             snap = collect_incident_state()
@@ -666,10 +782,15 @@ class TestCollectIncidents:
     def test_postmortem_complete_has_postmortem(self, tmp_path: Path):
         from cockpit.data.incidents import collect_incident_state
 
-        _write_md(tmp_path / "incidents" / "2026-02-15-done.md", {
-            "type": "incident", "title": "Done",
-            "severity": "sev1", "status": "postmortem-complete",
-        })
+        _write_md(
+            tmp_path / "incidents" / "2026-02-15-done.md",
+            {
+                "type": "incident",
+                "title": "Done",
+                "severity": "sev1",
+                "status": "postmortem-complete",
+            },
+        )
 
         with patch("cockpit.data.incidents.DATA_DIR", tmp_path):
             snap = collect_incident_state()
@@ -679,11 +800,16 @@ class TestCollectIncidents:
     def test_teams_affected_parsed(self, tmp_path: Path):
         from cockpit.data.incidents import collect_incident_state
 
-        _write_md(tmp_path / "incidents" / "2026-03-05-multi.md", {
-            "type": "incident", "title": "Multi-team",
-            "severity": "sev1", "status": "mitigated",
-            "teams-affected": ["Platform", "Product", "Data"],
-        })
+        _write_md(
+            tmp_path / "incidents" / "2026-03-05-multi.md",
+            {
+                "type": "incident",
+                "title": "Multi-team",
+                "severity": "sev1",
+                "status": "mitigated",
+                "teams-affected": ["Platform", "Product", "Data"],
+            },
+        )
 
         with patch("cockpit.data.incidents.DATA_DIR", tmp_path):
             snap = collect_incident_state()
@@ -711,6 +837,7 @@ Create `logos/data/incidents.py`:
 Deterministic, no LLM calls. Tracks incident status, severity,
 and whether a postmortem has been completed.
 """
+
 from __future__ import annotations
 
 import logging
@@ -819,6 +946,7 @@ git commit -m "feat: add incident collector with postmortem tracking"
 
 ```python
 """Tests for logos/data/postmortem_actions.py."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -837,15 +965,18 @@ class TestCollectPostmortemActions:
     def test_open_action(self, tmp_path: Path):
         from cockpit.data.postmortem_actions import collect_postmortem_action_state
 
-        _write_md(tmp_path / "postmortem-actions" / "add-alerting.md", {
-            "type": "postmortem-action",
-            "incident-ref": "2026-02-15-api-gateway-outage",
-            "title": "Add alerting",
-            "owner": "Marcus",
-            "status": "open",
-            "priority": "high",
-            "due-date": "2026-03-01",
-        })
+        _write_md(
+            tmp_path / "postmortem-actions" / "add-alerting.md",
+            {
+                "type": "postmortem-action",
+                "incident-ref": "2026-02-15-api-gateway-outage",
+                "title": "Add alerting",
+                "owner": "Marcus",
+                "status": "open",
+                "priority": "high",
+                "due-date": "2026-03-01",
+            },
+        )
 
         with patch("cockpit.data.postmortem_actions.DATA_DIR", tmp_path):
             snap = collect_postmortem_action_state()
@@ -856,10 +987,15 @@ class TestCollectPostmortemActions:
     def test_overdue_action(self, tmp_path: Path):
         from cockpit.data.postmortem_actions import collect_postmortem_action_state
 
-        _write_md(tmp_path / "postmortem-actions" / "overdue.md", {
-            "type": "postmortem-action", "title": "Overdue task",
-            "status": "open", "due-date": "2026-01-01",
-        })
+        _write_md(
+            tmp_path / "postmortem-actions" / "overdue.md",
+            {
+                "type": "postmortem-action",
+                "title": "Overdue task",
+                "status": "open",
+                "due-date": "2026-01-01",
+            },
+        )
 
         with patch("cockpit.data.postmortem_actions.DATA_DIR", tmp_path):
             snap = collect_postmortem_action_state()
@@ -871,10 +1007,15 @@ class TestCollectPostmortemActions:
     def test_completed_not_open(self, tmp_path: Path):
         from cockpit.data.postmortem_actions import collect_postmortem_action_state
 
-        _write_md(tmp_path / "postmortem-actions" / "done.md", {
-            "type": "postmortem-action", "title": "Done",
-            "status": "completed", "completed-date": "2026-02-20",
-        })
+        _write_md(
+            tmp_path / "postmortem-actions" / "done.md",
+            {
+                "type": "postmortem-action",
+                "title": "Done",
+                "status": "completed",
+                "completed-date": "2026-02-20",
+            },
+        )
 
         with patch("cockpit.data.postmortem_actions.DATA_DIR", tmp_path):
             snap = collect_postmortem_action_state()
@@ -902,6 +1043,7 @@ Create `logos/data/postmortem_actions.py`:
 Deterministic, no LLM calls. Tracks action items from incident
 postmortems with deadline and completion tracking.
 """
+
 from __future__ import annotations
 
 import logging
@@ -1010,6 +1152,7 @@ git commit -m "feat: add postmortem action collector with deadline tracking"
 
 ```python
 """Tests for logos/data/review_cycles.py."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -1028,17 +1171,22 @@ class TestCollectReviewCycles:
     def test_active_cycle(self, tmp_path: Path):
         from cockpit.data.review_cycles import collect_review_cycle_state
 
-        _write_md(tmp_path / "review-cycles" / "2026-h1-sarah.md", {
-            "type": "review-cycle", "cycle": "2026-H1", "person": "Sarah Chen",
-            "status": "self-assessment-due",
-            "self-assessment-due": "2026-04-15",
-            "self-assessment-received": False,
-            "peer-feedback-requested": 3,
-            "peer-feedback-received": 1,
-            "review-due": "2026-05-01",
-            "calibration-date": "2026-05-10",
-            "delivered": False,
-        })
+        _write_md(
+            tmp_path / "review-cycles" / "2026-h1-sarah.md",
+            {
+                "type": "review-cycle",
+                "cycle": "2026-H1",
+                "person": "Sarah Chen",
+                "status": "self-assessment-due",
+                "self-assessment-due": "2026-04-15",
+                "self-assessment-received": False,
+                "peer-feedback-requested": 3,
+                "peer-feedback-received": 1,
+                "review-due": "2026-05-01",
+                "calibration-date": "2026-05-10",
+                "delivered": False,
+            },
+        )
 
         with patch("cockpit.data.review_cycles.DATA_DIR", tmp_path):
             snap = collect_review_cycle_state()
@@ -1050,10 +1198,17 @@ class TestCollectReviewCycles:
     def test_overdue_cycle(self, tmp_path: Path):
         from cockpit.data.review_cycles import collect_review_cycle_state
 
-        _write_md(tmp_path / "review-cycles" / "2025-h2-late.md", {
-            "type": "review-cycle", "cycle": "2025-H2", "person": "Bob",
-            "status": "writing", "review-due": "2026-01-01", "delivered": False,
-        })
+        _write_md(
+            tmp_path / "review-cycles" / "2025-h2-late.md",
+            {
+                "type": "review-cycle",
+                "cycle": "2025-H2",
+                "person": "Bob",
+                "status": "writing",
+                "review-due": "2026-01-01",
+                "delivered": False,
+            },
+        )
 
         with patch("cockpit.data.review_cycles.DATA_DIR", tmp_path):
             snap = collect_review_cycle_state()
@@ -1064,10 +1219,16 @@ class TestCollectReviewCycles:
     def test_delivered_excluded_from_active(self, tmp_path: Path):
         from cockpit.data.review_cycles import collect_review_cycle_state
 
-        _write_md(tmp_path / "review-cycles" / "2025-h2-done.md", {
-            "type": "review-cycle", "cycle": "2025-H2", "person": "Alice",
-            "status": "delivered", "delivered": True,
-        })
+        _write_md(
+            tmp_path / "review-cycles" / "2025-h2-done.md",
+            {
+                "type": "review-cycle",
+                "cycle": "2025-H2",
+                "person": "Alice",
+                "status": "delivered",
+                "delivered": True,
+            },
+        )
 
         with patch("cockpit.data.review_cycles.DATA_DIR", tmp_path):
             snap = collect_review_cycle_state()
@@ -1077,14 +1238,26 @@ class TestCollectReviewCycles:
     def test_peer_feedback_gap_total(self, tmp_path: Path):
         from cockpit.data.review_cycles import collect_review_cycle_state
 
-        _write_md(tmp_path / "review-cycles" / "2026-h1-a.md", {
-            "type": "review-cycle", "person": "A", "status": "writing",
-            "peer-feedback-requested": 3, "peer-feedback-received": 1,
-        })
-        _write_md(tmp_path / "review-cycles" / "2026-h1-b.md", {
-            "type": "review-cycle", "person": "B", "status": "writing",
-            "peer-feedback-requested": 4, "peer-feedback-received": 2,
-        })
+        _write_md(
+            tmp_path / "review-cycles" / "2026-h1-a.md",
+            {
+                "type": "review-cycle",
+                "person": "A",
+                "status": "writing",
+                "peer-feedback-requested": 3,
+                "peer-feedback-received": 1,
+            },
+        )
+        _write_md(
+            tmp_path / "review-cycles" / "2026-h1-b.md",
+            {
+                "type": "review-cycle",
+                "person": "B",
+                "status": "writing",
+                "peer-feedback-requested": 4,
+                "peer-feedback-received": 2,
+            },
+        )
 
         with patch("cockpit.data.review_cycles.DATA_DIR", tmp_path):
             snap = collect_review_cycle_state()
@@ -1113,6 +1286,7 @@ Deterministic, no LLM calls. Tracks performance review process
 state: deadlines, self-assessments, peer feedback progress.
 Does NOT track review content (management safety axiom).
 """
+
 from __future__ import annotations
 
 import logging
@@ -1229,6 +1403,7 @@ git commit -m "feat: add review cycle collector with process deadline tracking"
 
 ```python
 """Tests for logos/data/status_reports.py."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -1249,11 +1424,17 @@ class TestCollectStatusReports:
         from datetime import date
 
         today = date.today().isoformat()
-        _write_md(tmp_path / "status-reports" / f"{today}-weekly.md", {
-            "type": "status-report", "date": today,
-            "cadence": "weekly", "direction": "upward",
-            "generated": True, "edited": True,
-        })
+        _write_md(
+            tmp_path / "status-reports" / f"{today}-weekly.md",
+            {
+                "type": "status-report",
+                "date": today,
+                "cadence": "weekly",
+                "direction": "upward",
+                "generated": True,
+                "edited": True,
+            },
+        )
 
         with patch("cockpit.data.status_reports.DATA_DIR", tmp_path):
             snap = collect_status_report_state()
@@ -1265,10 +1446,15 @@ class TestCollectStatusReports:
     def test_stale_weekly(self, tmp_path: Path):
         from cockpit.data.status_reports import collect_status_report_state
 
-        _write_md(tmp_path / "status-reports" / "2026-01-01-weekly.md", {
-            "type": "status-report", "date": "2026-01-01",
-            "cadence": "weekly", "direction": "upward",
-        })
+        _write_md(
+            tmp_path / "status-reports" / "2026-01-01-weekly.md",
+            {
+                "type": "status-report",
+                "date": "2026-01-01",
+                "cadence": "weekly",
+                "direction": "upward",
+            },
+        )
 
         with patch("cockpit.data.status_reports.DATA_DIR", tmp_path):
             snap = collect_status_report_state()
@@ -1288,12 +1474,22 @@ class TestCollectStatusReports:
     def test_latest_date_is_most_recent(self, tmp_path: Path):
         from cockpit.data.status_reports import collect_status_report_state
 
-        _write_md(tmp_path / "status-reports" / "2026-02-01-weekly.md", {
-            "type": "status-report", "date": "2026-02-01", "cadence": "weekly",
-        })
-        _write_md(tmp_path / "status-reports" / "2026-03-01-weekly.md", {
-            "type": "status-report", "date": "2026-03-01", "cadence": "weekly",
-        })
+        _write_md(
+            tmp_path / "status-reports" / "2026-02-01-weekly.md",
+            {
+                "type": "status-report",
+                "date": "2026-02-01",
+                "cadence": "weekly",
+            },
+        )
+        _write_md(
+            tmp_path / "status-reports" / "2026-03-01-weekly.md",
+            {
+                "type": "status-report",
+                "date": "2026-03-01",
+                "cadence": "weekly",
+            },
+        )
 
         with patch("cockpit.data.status_reports.DATA_DIR", tmp_path):
             snap = collect_status_report_state()
@@ -1313,6 +1509,7 @@ Create `logos/data/status_reports.py`:
 Deterministic, no LLM calls. Tracks status report recency and
 staleness based on cadence (weekly > 9 days, monthly > 35 days).
 """
+
 from __future__ import annotations
 
 import logging
@@ -1432,14 +1629,27 @@ Add these test classes to `tests/test_management_bridge.py` (after existing clas
 ```python
 class TestOKRFacts:
     def test_okr_generates_fact(self, tmp_path: Path):
-        _write_md(tmp_path / "okrs" / "2026-q1-platform.md", {
-            "type": "okr", "status": "active", "objective": "Improve reliability",
-            "scope": "team", "team": "Platform", "quarter": "2026-Q1",
-            "key-results": [
-                {"id": "kr1", "description": "P99", "target": 200, "current": 310,
-                 "confidence": 0.6, "last-updated": "2026-03-01"},
-            ],
-        })
+        _write_md(
+            tmp_path / "okrs" / "2026-q1-platform.md",
+            {
+                "type": "okr",
+                "status": "active",
+                "objective": "Improve reliability",
+                "scope": "team",
+                "team": "Platform",
+                "quarter": "2026-Q1",
+                "key-results": [
+                    {
+                        "id": "kr1",
+                        "description": "P99",
+                        "target": 200,
+                        "current": 310,
+                        "confidence": 0.6,
+                        "last-updated": "2026-03-01",
+                    },
+                ],
+            },
+        )
 
         with patch("shared.management_bridge.DATA_DIR", tmp_path):
             facts = generate_facts()
@@ -1452,30 +1662,46 @@ class TestOKRFacts:
 
 class TestIncidentFacts:
     def test_incident_generates_fact(self, tmp_path: Path):
-        _write_md(tmp_path / "incidents" / "2026-02-15-outage.md", {
-            "type": "incident", "title": "API outage", "severity": "sev1",
-            "status": "postmortem-complete", "duration-minutes": 75,
-        })
+        _write_md(
+            tmp_path / "incidents" / "2026-02-15-outage.md",
+            {
+                "type": "incident",
+                "title": "API outage",
+                "severity": "sev1",
+                "status": "postmortem-complete",
+                "duration-minutes": 75,
+            },
+        )
 
         with patch("shared.management_bridge.DATA_DIR", tmp_path):
             facts = generate_facts()
 
-        incident_facts = [f for f in facts if "incident" in f["value"].lower() or "outage" in f["value"].lower()]
+        incident_facts = [
+            f for f in facts if "incident" in f["value"].lower() or "outage" in f["value"].lower()
+        ]
         assert len(incident_facts) >= 1
         assert any(f["dimension"] == "attention_distribution" for f in incident_facts)
 
 
 class TestReviewCycleFacts:
     def test_review_cycle_generates_fact(self, tmp_path: Path):
-        _write_md(tmp_path / "review-cycles" / "2026-h1-sarah.md", {
-            "type": "review-cycle", "cycle": "2026-H1", "person": "Sarah Chen",
-            "status": "self-assessment-due", "review-due": "2026-05-01",
-        })
+        _write_md(
+            tmp_path / "review-cycles" / "2026-h1-sarah.md",
+            {
+                "type": "review-cycle",
+                "cycle": "2026-H1",
+                "person": "Sarah Chen",
+                "status": "self-assessment-due",
+                "review-due": "2026-05-01",
+            },
+        )
 
         with patch("shared.management_bridge.DATA_DIR", tmp_path):
             facts = generate_facts()
 
-        rc_facts = [f for f in facts if "Review cycle" in f["value"] or "review" in f["value"].lower()]
+        rc_facts = [
+            f for f in facts if "Review cycle" in f["value"] or "review" in f["value"].lower()
+        ]
         assert len(rc_facts) >= 1
         assert any(f["dimension"] == "management_practice" for f in rc_facts)
 ```
@@ -1509,15 +1735,20 @@ def _okr_facts() -> list[dict]:
         quarter = str(fm.get("quarter", ""))
         krs = fm.get("key-results", [])
         kr_count = len(krs) if isinstance(krs, list) else 0
-        on_track = sum(1 for kr in (krs if isinstance(krs, list) else [])
-                       if isinstance(kr, dict) and (kr.get("confidence") or 0) >= 0.5)
+        on_track = sum(
+            1
+            for kr in (krs if isinstance(krs, list) else [])
+            if isinstance(kr, dict) and (kr.get("confidence") or 0) >= 0.5
+        )
 
         scope_label = f"{scope} ({team})" if team else scope
-        facts.append(_make_fact(
-            f"OKR ({scope_label}, {quarter}): {objective} — {on_track}/{kr_count} KRs on track",
-            "strategic_alignment",
-            f"okrs/{path.name}",
-        ))
+        facts.append(
+            _make_fact(
+                f"OKR ({scope_label}, {quarter}): {objective} — {on_track}/{kr_count} KRs on track",
+                "strategic_alignment",
+                f"okrs/{path.name}",
+            )
+        )
 
     return facts
 
@@ -1543,11 +1774,13 @@ def _smart_goal_facts() -> list[dict]:
         category = str(fm.get("category", ""))
         target_date = str(fm.get("target-date", ""))
 
-        facts.append(_make_fact(
-            f"SMART goal for {person}: {specific} ({category}, due {target_date})",
-            "management_practice",
-            f"goals/{path.name}",
-        ))
+        facts.append(
+            _make_fact(
+                f"SMART goal for {person}: {specific} ({category}, due {target_date})",
+                "management_practice",
+                f"goals/{path.name}",
+            )
+        )
 
     return facts
 
@@ -1570,11 +1803,13 @@ def _incident_facts() -> list[dict]:
         duration = fm.get("duration-minutes")
         dur_str = f"{duration}min" if duration else "unknown duration"
 
-        facts.append(_make_fact(
-            f"{severity.upper()} incident: {title} ({dur_str}, {status})",
-            "attention_distribution",
-            f"incidents/{path.name}",
-        ))
+        facts.append(
+            _make_fact(
+                f"{severity.upper()} incident: {title} ({dur_str}, {status})",
+                "attention_distribution",
+                f"incidents/{path.name}",
+            )
+        )
 
     return facts
 
@@ -1598,11 +1833,13 @@ def _postmortem_action_facts() -> list[dict]:
         title = str(fm.get("title", path.stem))
         owner = str(fm.get("owner", ""))
 
-        facts.append(_make_fact(
-            f"Postmortem action ({status}): {title} — owner: {owner}",
-            "management_practice",
-            f"postmortem-actions/{path.name}",
-        ))
+        facts.append(
+            _make_fact(
+                f"Postmortem action ({status}): {title} — owner: {owner}",
+                "management_practice",
+                f"postmortem-actions/{path.name}",
+            )
+        )
 
     return facts
 
@@ -1627,11 +1864,13 @@ def _review_cycle_facts() -> list[dict]:
         status = str(fm.get("status", "not-started"))
         review_due = str(fm.get("review-due", ""))
 
-        facts.append(_make_fact(
-            f"Review cycle {cycle} for {person}: {status} (due {review_due})",
-            "management_practice",
-            f"review-cycles/{path.name}",
-        ))
+        facts.append(
+            _make_fact(
+                f"Review cycle {cycle} for {person}: {status} (due {review_due})",
+                "management_practice",
+                f"review-cycles/{path.name}",
+            )
+        )
 
     return facts
 ```
@@ -1703,6 +1942,7 @@ Create `tests/test_nudge_categories.py`:
 
 ```python
 """Tests for nudge category slot allocation and redistribution."""
+
 from __future__ import annotations
 
 from cockpit.data.nudges import Nudge, _allocate_by_category, CATEGORY_SLOTS
@@ -1711,53 +1951,155 @@ from cockpit.data.nudges import Nudge, _allocate_by_category, CATEGORY_SLOTS
 class TestCategoryAllocation:
     def test_each_category_gets_slots(self):
         nudges = [
-            Nudge(category="people", priority_score=70, priority_label="high",
-                  title="P1", detail="", suggested_action=""),
-            Nudge(category="people", priority_score=65, priority_label="high",
-                  title="P2", detail="", suggested_action=""),
-            Nudge(category="people", priority_score=60, priority_label="medium",
-                  title="P3", detail="", suggested_action=""),
-            Nudge(category="people", priority_score=55, priority_label="medium",
-                  title="P4", detail="", suggested_action=""),
-            Nudge(category="goals", priority_score=70, priority_label="high",
-                  title="G1", detail="", suggested_action=""),
-            Nudge(category="goals", priority_score=65, priority_label="high",
-                  title="G2", detail="", suggested_action=""),
-            Nudge(category="goals", priority_score=60, priority_label="medium",
-                  title="G3", detail="", suggested_action=""),
-            Nudge(category="operational", priority_score=70, priority_label="high",
-                  title="O1", detail="", suggested_action=""),
-            Nudge(category="operational", priority_score=65, priority_label="high",
-                  title="O2", detail="", suggested_action=""),
-            Nudge(category="operational", priority_score=60, priority_label="medium",
-                  title="O3", detail="", suggested_action=""),
+            Nudge(
+                category="people",
+                priority_score=70,
+                priority_label="high",
+                title="P1",
+                detail="",
+                suggested_action="",
+            ),
+            Nudge(
+                category="people",
+                priority_score=65,
+                priority_label="high",
+                title="P2",
+                detail="",
+                suggested_action="",
+            ),
+            Nudge(
+                category="people",
+                priority_score=60,
+                priority_label="medium",
+                title="P3",
+                detail="",
+                suggested_action="",
+            ),
+            Nudge(
+                category="people",
+                priority_score=55,
+                priority_label="medium",
+                title="P4",
+                detail="",
+                suggested_action="",
+            ),
+            Nudge(
+                category="goals",
+                priority_score=70,
+                priority_label="high",
+                title="G1",
+                detail="",
+                suggested_action="",
+            ),
+            Nudge(
+                category="goals",
+                priority_score=65,
+                priority_label="high",
+                title="G2",
+                detail="",
+                suggested_action="",
+            ),
+            Nudge(
+                category="goals",
+                priority_score=60,
+                priority_label="medium",
+                title="G3",
+                detail="",
+                suggested_action="",
+            ),
+            Nudge(
+                category="operational",
+                priority_score=70,
+                priority_label="high",
+                title="O1",
+                detail="",
+                suggested_action="",
+            ),
+            Nudge(
+                category="operational",
+                priority_score=65,
+                priority_label="high",
+                title="O2",
+                detail="",
+                suggested_action="",
+            ),
+            Nudge(
+                category="operational",
+                priority_score=60,
+                priority_label="medium",
+                title="O3",
+                detail="",
+                suggested_action="",
+            ),
         ]
 
         result = _allocate_by_category(nudges)
 
         cats = [n.category for n in result]
         assert cats.count("people") == CATEGORY_SLOTS["people"]  # 3
-        assert cats.count("goals") == CATEGORY_SLOTS["goals"]    # 2
+        assert cats.count("goals") == CATEGORY_SLOTS["goals"]  # 2
         assert cats.count("operational") == CATEGORY_SLOTS["operational"]  # 2
         assert len(result) == 7
 
     def test_unused_slots_redistribute(self):
         nudges = [
-            Nudge(category="people", priority_score=70, priority_label="high",
-                  title="P1", detail="", suggested_action=""),
-            Nudge(category="people", priority_score=65, priority_label="high",
-                  title="P2", detail="", suggested_action=""),
-            Nudge(category="people", priority_score=60, priority_label="medium",
-                  title="P3", detail="", suggested_action=""),
-            Nudge(category="people", priority_score=55, priority_label="medium",
-                  title="P4", detail="", suggested_action=""),
+            Nudge(
+                category="people",
+                priority_score=70,
+                priority_label="high",
+                title="P1",
+                detail="",
+                suggested_action="",
+            ),
+            Nudge(
+                category="people",
+                priority_score=65,
+                priority_label="high",
+                title="P2",
+                detail="",
+                suggested_action="",
+            ),
+            Nudge(
+                category="people",
+                priority_score=60,
+                priority_label="medium",
+                title="P3",
+                detail="",
+                suggested_action="",
+            ),
+            Nudge(
+                category="people",
+                priority_score=55,
+                priority_label="medium",
+                title="P4",
+                detail="",
+                suggested_action="",
+            ),
             # goals has only 1 item (budget=2), so 1 slot redistributes
-            Nudge(category="goals", priority_score=70, priority_label="high",
-                  title="G1", detail="", suggested_action=""),
-            Nudge(category="operational", priority_score=65, priority_label="high",
-                  title="O1", detail="", suggested_action=""),
-            Nudge(category="operational", priority_score=60, priority_label="medium",
-                  title="O2", detail="", suggested_action=""),
+            Nudge(
+                category="goals",
+                priority_score=70,
+                priority_label="high",
+                title="G1",
+                detail="",
+                suggested_action="",
+            ),
+            Nudge(
+                category="operational",
+                priority_score=65,
+                priority_label="high",
+                title="O1",
+                detail="",
+                suggested_action="",
+            ),
+            Nudge(
+                category="operational",
+                priority_score=60,
+                priority_label="medium",
+                title="O2",
+                detail="",
+                suggested_action="",
+            ),
         ]
 
         result = _allocate_by_category(nudges)
@@ -1775,8 +2117,14 @@ class TestCategoryAllocation:
 
     def test_single_category_only(self):
         nudges = [
-            Nudge(category="people", priority_score=70, priority_label="high",
-                  title=f"P{i}", detail="", suggested_action="")
+            Nudge(
+                category="people",
+                priority_score=70,
+                priority_label="high",
+                title=f"P{i}",
+                detail="",
+                suggested_action="",
+            )
             for i in range(10)
         ]
 
@@ -1788,12 +2136,30 @@ class TestCategoryAllocation:
 
     def test_result_sorted_by_priority(self):
         nudges = [
-            Nudge(category="people", priority_score=40, priority_label="low",
-                  title="P-low", detail="", suggested_action=""),
-            Nudge(category="goals", priority_score=70, priority_label="high",
-                  title="G-high", detail="", suggested_action=""),
-            Nudge(category="operational", priority_score=55, priority_label="medium",
-                  title="O-med", detail="", suggested_action=""),
+            Nudge(
+                category="people",
+                priority_score=40,
+                priority_label="low",
+                title="P-low",
+                detail="",
+                suggested_action="",
+            ),
+            Nudge(
+                category="goals",
+                priority_score=70,
+                priority_label="high",
+                title="G-high",
+                detail="",
+                suggested_action="",
+            ),
+            Nudge(
+                category="operational",
+                priority_score=55,
+                priority_label="medium",
+                title="O-med",
+                detail="",
+                suggested_action="",
+            ),
         ]
 
         result = _allocate_by_category(nudges)
@@ -1822,6 +2188,7 @@ New sub-collectors follow this pattern (use lazy imports inside each function):
 def _collect_okr_nudges(nudges: list[Nudge]) -> None:
     try:
         from cockpit.data.okrs import collect_okr_state
+
         snap = collect_okr_state()
         # ... check conditions, append nudges with category="goals" ...
     except Exception:
@@ -1830,7 +2197,9 @@ def _collect_okr_nudges(nudges: list[Nudge]) -> None:
 
 Update `collect_nudges()`:
 ```python
-def collect_nudges(*, max_nudges: int = 7, snapshot: ManagementSnapshot | None = None) -> list[Nudge]:
+def collect_nudges(
+    *, max_nudges: int = 7, snapshot: ManagementSnapshot | None = None
+) -> list[Nudge]:
     nudges: list[Nudge] = []
     _collect_management_nudges(nudges, snap=snapshot)
     _collect_team_health_nudges(nudges, snap=snapshot)
@@ -1847,12 +2216,17 @@ def collect_nudges(*, max_nudges: int = 7, snapshot: ManagementSnapshot | None =
     if len(result) > max_nudges:
         overflow = len(result) - max_nudges
         visible = result[:max_nudges]
-        visible.append(Nudge(
-            category="meta", priority_score=0, priority_label="low",
-            title=f"+ {overflow} more items",
-            detail=f"{overflow} lower-priority items not shown",
-            suggested_action="", source_id="meta:overflow",
-        ))
+        visible.append(
+            Nudge(
+                category="meta",
+                priority_score=0,
+                priority_label="low",
+                title=f"+ {overflow} more items",
+                detail=f"{overflow} lower-priority items not shown",
+                suggested_action="",
+                source_id="meta:overflow",
+            )
+        )
         return visible
 
     return result
@@ -1892,8 +2266,12 @@ def _rule_okr_changed() -> Rule:
     return Rule(
         name="okr_changed",
         description="Refresh cache on OKR changes",
-        trigger_filter=lambda e: e.subdirectory == "okrs" and e.event_type in ("created", "modified"),
-        produce=lambda e: [Action(name="refresh_cache", handler=_refresh_cache, phase=0, priority=0)],
+        trigger_filter=lambda e: (
+            e.subdirectory == "okrs" and e.event_type in ("created", "modified")
+        ),
+        produce=lambda e: [
+            Action(name="refresh_cache", handler=_refresh_cache, phase=0, priority=0)
+        ],
     )
 
 
@@ -1902,8 +2280,12 @@ def _rule_smart_goal_changed() -> Rule:
     return Rule(
         name="smart_goal_changed",
         description="Refresh cache on SMART goal changes",
-        trigger_filter=lambda e: e.subdirectory == "goals" and e.event_type in ("created", "modified"),
-        produce=lambda e: [Action(name="refresh_cache", handler=_refresh_cache, phase=0, priority=0)],
+        trigger_filter=lambda e: (
+            e.subdirectory == "goals" and e.event_type in ("created", "modified")
+        ),
+        produce=lambda e: [
+            Action(name="refresh_cache", handler=_refresh_cache, phase=0, priority=0)
+        ],
     )
 
 
@@ -1912,8 +2294,12 @@ def _rule_incident_changed() -> Rule:
     return Rule(
         name="incident_changed",
         description="Refresh cache on incident changes",
-        trigger_filter=lambda e: e.subdirectory == "incidents" and e.event_type in ("created", "modified"),
-        produce=lambda e: [Action(name="refresh_cache", handler=_refresh_cache, phase=0, priority=0)],
+        trigger_filter=lambda e: (
+            e.subdirectory == "incidents" and e.event_type in ("created", "modified")
+        ),
+        produce=lambda e: [
+            Action(name="refresh_cache", handler=_refresh_cache, phase=0, priority=0)
+        ],
     )
 
 
@@ -1922,8 +2308,12 @@ def _rule_postmortem_action_changed() -> Rule:
     return Rule(
         name="postmortem_action_changed",
         description="Refresh cache on postmortem action changes",
-        trigger_filter=lambda e: e.subdirectory == "postmortem-actions" and e.event_type in ("created", "modified"),
-        produce=lambda e: [Action(name="refresh_cache", handler=_refresh_cache, phase=0, priority=0)],
+        trigger_filter=lambda e: (
+            e.subdirectory == "postmortem-actions" and e.event_type in ("created", "modified")
+        ),
+        produce=lambda e: [
+            Action(name="refresh_cache", handler=_refresh_cache, phase=0, priority=0)
+        ],
     )
 
 
@@ -1932,8 +2322,12 @@ def _rule_review_cycle_changed() -> Rule:
     return Rule(
         name="review_cycle_changed",
         description="Refresh cache on review cycle changes",
-        trigger_filter=lambda e: e.subdirectory == "review-cycles" and e.event_type in ("created", "modified"),
-        produce=lambda e: [Action(name="refresh_cache", handler=_refresh_cache, phase=0, priority=0)],
+        trigger_filter=lambda e: (
+            e.subdirectory == "review-cycles" and e.event_type in ("created", "modified")
+        ),
+        produce=lambda e: [
+            Action(name="refresh_cache", handler=_refresh_cache, phase=0, priority=0)
+        ],
     )
 
 
@@ -1942,8 +2336,12 @@ def _rule_status_report_changed() -> Rule:
     return Rule(
         name="status_report_changed",
         description="Refresh cache on status report changes",
-        trigger_filter=lambda e: e.subdirectory == "status-reports" and e.event_type in ("created", "modified"),
-        produce=lambda e: [Action(name="refresh_cache", handler=_refresh_cache, phase=0, priority=0)],
+        trigger_filter=lambda e: (
+            e.subdirectory == "status-reports" and e.event_type in ("created", "modified")
+        ),
+        produce=lambda e: [
+            Action(name="refresh_cache", handler=_refresh_cache, phase=0, priority=0)
+        ],
     )
 ```
 
@@ -2004,21 +2402,22 @@ Add fields to `DataCache` (after `team_health: Any = None`, line 25):
 Add collector calls to `_refresh_sync()` (after the team_health try block, before nudges):
 
 ```python
-        # New Tier 1 collectors
-        for name, import_path, fn_name in [
-            ("okrs", "cockpit.data.okrs", "collect_okr_state"),
-            ("smart_goals", "cockpit.data.smart_goals", "collect_smart_goal_state"),
-            ("incidents", "cockpit.data.incidents", "collect_incident_state"),
-            ("postmortem_actions", "cockpit.data.postmortem_actions", "collect_postmortem_action_state"),
-            ("review_cycles", "cockpit.data.review_cycles", "collect_review_cycle_state"),
-            ("status_reports", "cockpit.data.status_reports", "collect_status_report_state"),
-        ]:
-            try:
-                import importlib
-                mod = importlib.import_module(import_path)
-                setattr(self, name, getattr(mod, fn_name)())
-            except Exception as e:
-                log.warning("Refresh %s failed: %s", name, e)
+# New Tier 1 collectors
+for name, import_path, fn_name in [
+    ("okrs", "cockpit.data.okrs", "collect_okr_state"),
+    ("smart_goals", "cockpit.data.smart_goals", "collect_smart_goal_state"),
+    ("incidents", "cockpit.data.incidents", "collect_incident_state"),
+    ("postmortem_actions", "cockpit.data.postmortem_actions", "collect_postmortem_action_state"),
+    ("review_cycles", "cockpit.data.review_cycles", "collect_review_cycle_state"),
+    ("status_reports", "cockpit.data.status_reports", "collect_status_report_state"),
+]:
+    try:
+        import importlib
+
+        mod = importlib.import_module(import_path)
+        setattr(self, name, getattr(mod, fn_name)())
+    except Exception as e:
+        log.warning("Refresh %s failed: %s", name, e)
 ```
 
 **Step 2: Update data.py**
@@ -2027,6 +2426,7 @@ Add after `get_team_health()` endpoint (line 72):
 
 ```python
 # ── Tier 1 expansion ──────────────────────────────────────────────────
+
 
 @router.get("/okrs")
 async def get_okrs():

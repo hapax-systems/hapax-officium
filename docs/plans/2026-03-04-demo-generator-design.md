@@ -98,24 +98,26 @@ uv run python -m agents.demo "health monitoring" --audience family --format slid
 
 ```python
 class ScreenshotSpec(BaseModel):
-    url: str                        # e.g., "http://localhost:5173"
-    viewport: tuple[int, int]       # (1920, 1080)
-    actions: list[str]              # Playwright actions before capture
-    wait_for: str | None            # text/selector to wait for
-    capture: str                    # "fullpage" | "viewport" | selector
+    url: str  # e.g., "http://localhost:5173"
+    viewport: tuple[int, int]  # (1920, 1080)
+    actions: list[str]  # Playwright actions before capture
+    wait_for: str | None  # text/selector to wait for
+    capture: str  # "fullpage" | "viewport" | selector
+
 
 class DemoScene(BaseModel):
     title: str
-    narration: str                  # spoken text for this scene
-    duration_hint: float            # estimated seconds
+    narration: str  # spoken text for this scene
+    duration_hint: float  # estimated seconds
     screenshot: ScreenshotSpec
+
 
 class DemoScript(BaseModel):
     title: str
-    audience: str                   # resolved archetype
+    audience: str  # resolved archetype
     scenes: list[DemoScene]
-    intro_narration: str            # opening before first screenshot
-    outro_narration: str            # closing
+    intro_narration: str  # opening before first screenshot
+    outro_narration: str  # closing
 ```
 
 ### Scope Resolution

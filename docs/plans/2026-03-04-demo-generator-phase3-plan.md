@@ -170,27 +170,25 @@ Replace with:
 Then guard the voice generation and VRAM blocks:
 
 ```python
-        audio_dir = demo_dir / "audio"
-        if tts_available:
-            # Ensure VRAM (blocking call — run in thread to avoid freezing event loop)
-            progress("Checking GPU VRAM...")
-            await asyncio.to_thread(ensure_vram_available)
+audio_dir = demo_dir / "audio"
+if tts_available:
+    # Ensure VRAM (blocking call — run in thread to avoid freezing event loop)
+    progress("Checking GPU VRAM...")
+    await asyncio.to_thread(ensure_vram_available)
 
-            # Generate voice segments
-            voice_segments = []
-            if script.intro_narration:
-                voice_segments.append(("00-intro", script.intro_narration))
-            for i, scene in enumerate(script.scenes, 1):
-                slug = re.sub(r"[^a-z0-9]+", "-", scene.title.lower()).strip("-")
-                voice_segments.append((f"{i:02d}-{slug}", scene.narration))
-            if script.outro_narration:
-                voice_segments.append(("99-outro", script.outro_narration))
+    # Generate voice segments
+    voice_segments = []
+    if script.intro_narration:
+        voice_segments.append(("00-intro", script.intro_narration))
+    for i, scene in enumerate(script.scenes, 1):
+        slug = re.sub(r"[^a-z0-9]+", "-", scene.title.lower()).strip("-")
+        voice_segments.append((f"{i:02d}-{slug}", scene.narration))
+    if script.outro_narration:
+        voice_segments.append(("99-outro", script.outro_narration))
 
-            generate_all_voice_segments(
-                voice_segments, audio_dir, on_progress=progress
-            )
-        else:
-            audio_dir = None  # No audio — video will use duration hints
+    generate_all_voice_segments(voice_segments, audio_dir, on_progress=progress)
+else:
+    audio_dir = None  # No audio — video will use duration hints
 ```
 
 The rest of the video block (title cards + assemble_video) stays the same — `assemble_video` already handles `audio_dir=None` gracefully.
@@ -220,6 +218,7 @@ git commit -m "feat(demo): graceful fallback — video without narration when TT
 
 ```python
 """Tests for demo history listing."""
+
 from __future__ import annotations
 
 import json
@@ -235,8 +234,26 @@ class TestListDemos:
     def demos_dir(self, tmp_path) -> Path:
         """Create fake demo output directories."""
         for name, meta in [
-            ("20260304-120000-system", {"title": "System Demo", "audience": "family", "format": "slides", "scenes": 3, "duration": 20.0}),
-            ("20260304-130000-health", {"title": "Health Demo", "audience": "technical-peer", "format": "video", "scenes": 5, "duration": 35.0}),
+            (
+                "20260304-120000-system",
+                {
+                    "title": "System Demo",
+                    "audience": "family",
+                    "format": "slides",
+                    "scenes": 3,
+                    "duration": 20.0,
+                },
+            ),
+            (
+                "20260304-130000-health",
+                {
+                    "title": "Health Demo",
+                    "audience": "technical-peer",
+                    "format": "video",
+                    "scenes": 5,
+                    "duration": 35.0,
+                },
+            ),
         ]:
             d = tmp_path / name
             d.mkdir()
@@ -280,6 +297,7 @@ Expected: FAIL — `ModuleNotFoundError`
 
 ```python
 """Demo history — list and inspect generated demos."""
+
 from __future__ import annotations
 
 import json
@@ -344,6 +362,7 @@ git commit -m "feat(demo): demo history listing — list and inspect generated d
 
 ```python
 """Tests for cockpit demo API endpoints."""
+
 from __future__ import annotations
 
 import json
@@ -366,7 +385,13 @@ class TestDemoEndpoints:
         """Create fake demo dirs and patch OUTPUT_DIR."""
         d = tmp_path / "20260304-120000-test"
         d.mkdir()
-        meta = {"title": "Test Demo", "audience": "family", "format": "slides", "scenes": 2, "duration": 15.0}
+        meta = {
+            "title": "Test Demo",
+            "audience": "family",
+            "format": "slides",
+            "scenes": 2,
+            "duration": 15.0,
+        }
         (d / "metadata.json").write_text(json.dumps(meta))
         (d / "script.json").write_text("{}")
         return tmp_path
@@ -386,6 +411,7 @@ class TestDemoEndpoints:
 
 ```python
 """Demo history and management API endpoints."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -435,6 +461,7 @@ In `logos/api/app.py`, add the demo routes. Find the existing router includes an
 
 ```python
 from cockpit.api.routes.demos import router as demos_router
+
 app.include_router(demos_router)
 ```
 

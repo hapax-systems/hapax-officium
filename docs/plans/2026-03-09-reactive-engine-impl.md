@@ -78,6 +78,7 @@ Create `tests/test_engine_models.py`:
 
 ```python
 """Tests for cockpit.engine.models — core data types."""
+
 from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import AsyncMock
@@ -191,6 +192,7 @@ Create `logos/engine/models.py`:
 
 ```python
 """Core data types for the reactive engine."""
+
 from __future__ import annotations
 
 from collections import defaultdict
@@ -281,6 +283,7 @@ Create `tests/test_engine_watcher.py`:
 
 ```python
 """Tests for cockpit.engine.watcher — filesystem watcher with debounce."""
+
 import asyncio
 from datetime import datetime, timezone
 from pathlib import Path
@@ -442,6 +445,7 @@ Create `logos/engine/watcher.py`:
 
 ```python
 """Filesystem watcher with debounce and self-trigger prevention."""
+
 from __future__ import annotations
 
 import asyncio
@@ -560,9 +564,7 @@ class DataDirWatcher:
 
         # Debounce: cancel pending timer for this path, schedule new one
         if self._loop and self._loop.is_running():
-            self._loop.call_soon_threadsafe(
-                self._schedule_debounce, resolved, is_created
-            )
+            self._loop.call_soon_threadsafe(self._schedule_debounce, resolved, is_created)
 
     def _schedule_debounce(self, path: Path, is_created: bool) -> None:
         """Schedule debounced event emission (runs on asyncio loop)."""
@@ -639,6 +641,7 @@ Create `tests/test_engine_rules.py`:
 
 ```python
 """Tests for cockpit.engine.rules — rule evaluation and registry."""
+
 from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import AsyncMock
@@ -647,8 +650,9 @@ from cockpit.engine.models import ChangeEvent
 from cockpit.engine.rules import Rule, RuleRegistry, evaluate_rules
 
 
-def _event(subdir: str, name: str = "test.md", event_type: str = "created",
-           doc_type: str | None = None) -> ChangeEvent:
+def _event(
+    subdir: str, name: str = "test.md", event_type: str = "created", doc_type: str | None = None
+) -> ChangeEvent:
     return ChangeEvent(
         path=Path(f"/data/{subdir}/{name}"),
         subdirectory=subdir,
@@ -693,6 +697,7 @@ class TestRuleRegistry:
 class TestEvaluateRules:
     def test_collects_actions_from_matching_rules(self):
         from cockpit.engine.models import Action
+
         handler = AsyncMock()
         rule_a = Rule(
             name="rule_a",
@@ -728,6 +733,7 @@ class TestEvaluateRules:
 
     def test_deduplicates_actions_by_name(self):
         from cockpit.engine.models import Action
+
         handler = AsyncMock()
         rule_a = Rule(
             name="rule_a",
@@ -774,6 +780,7 @@ Create `logos/engine/rules.py`:
 
 ```python
 """Rules engine — evaluates filesystem events against registered rules."""
+
 from __future__ import annotations
 
 import logging
@@ -853,6 +860,7 @@ Create `tests/test_engine_executor.py`:
 
 ```python
 """Tests for cockpit.engine.executor — phased async action execution."""
+
 import asyncio
 from datetime import datetime, timezone
 from pathlib import Path
@@ -1001,10 +1009,7 @@ class TestPhasedExecutor:
 
         plan = ActionPlan(
             trigger=_event(),
-            actions=[
-                Action(name=f"llm_{i}", handler=llm_call, phase=1)
-                for i in range(4)
-            ],
+            actions=[Action(name=f"llm_{i}", handler=llm_call, phase=1) for i in range(4)],
         )
         executor = PhasedExecutor(llm_concurrency=2, action_timeout_s=10)
         await executor.execute(plan)
@@ -1036,6 +1041,7 @@ Create `logos/engine/executor.py`:
 
 ```python
 """Phased async executor — runs ActionPlans with bounded concurrency."""
+
 from __future__ import annotations
 
 import asyncio
@@ -1068,9 +1074,7 @@ class PhasedExecutor:
             actions = by_phase[phase_num]
             await self._run_phase(plan, actions, phase_num)
 
-    async def _run_phase(
-        self, plan: ActionPlan, actions: list[Action], phase: int
-    ) -> None:
+    async def _run_phase(self, plan: ActionPlan, actions: list[Action], phase: int) -> None:
         """Run all actions in a phase concurrently (respecting dependencies)."""
         tasks: dict[str, asyncio.Task] = {}
         pending = list(actions)
@@ -1143,6 +1147,7 @@ Create `tests/test_engine_delivery.py`:
 
 ```python
 """Tests for cockpit.engine.delivery — batched notification queue."""
+
 import asyncio
 from datetime import datetime, timezone
 from pathlib import Path
@@ -1244,6 +1249,7 @@ Create `logos/engine/delivery.py`:
 
 ```python
 """Batched delivery queue — consolidates notifications respecting attention budget."""
+
 from __future__ import annotations
 
 import asyncio
@@ -1263,6 +1269,7 @@ def _send_notification(*, title: str, message: str, priority: str = "default") -
     """Send via ntfy (wraps shared.notify)."""
     try:
         from shared.notify import send_notification
+
         return send_notification(title, message, priority=priority)
     except Exception:
         _log.exception("Notification send failed")
@@ -1359,6 +1366,7 @@ class DeliveryQueue:
 
     async def start_flush_loop(self) -> None:
         """Start periodic flush loop."""
+
         async def _loop():
             while True:
                 await asyncio.sleep(self.flush_interval_s)
@@ -1401,6 +1409,7 @@ Create `tests/test_engine_reactive_rules.py`. Key tests per rule — each test v
 
 ```python
 """Tests for cockpit.engine.reactive_rules — the 6 concrete reactive rules."""
+
 from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import patch, AsyncMock, MagicMock
@@ -1409,8 +1418,9 @@ from cockpit.engine.models import ChangeEvent
 from cockpit.engine.reactive_rules import build_default_rules
 
 
-def _event(subdir: str, name: str = "test.md", event_type: str = "created",
-           doc_type: str | None = None) -> ChangeEvent:
+def _event(
+    subdir: str, name: str = "test.md", event_type: str = "created", doc_type: str | None = None
+) -> ChangeEvent:
     return ChangeEvent(
         path=Path(f"/data/{subdir}/{name}"),
         subdirectory=subdir,
@@ -1451,8 +1461,7 @@ class TestMeetingCascadeRule:
     def test_produces_refresh_and_optional_prep(self):
         registry = build_default_rules()
         rule = next(r for r in registry.rules if r.name == "meeting_cascade")
-        actions = rule.produce(_event("meetings", "standup-2026-03-09.md",
-                                      doc_type="meeting"))
+        actions = rule.produce(_event("meetings", "standup-2026-03-09.md", doc_type="meeting"))
         names = [a.name for a in actions]
         assert "refresh_cache" in names
 
@@ -1527,8 +1536,12 @@ class TestAllRulesRegistered:
         assert len(registry.rules) == 6
         names = {r.name for r in registry.rules}
         assert names == {
-            "inbox_ingest", "meeting_cascade", "person_changed",
-            "coaching_changed", "feedback_changed", "decision_logged",
+            "inbox_ingest",
+            "meeting_cascade",
+            "person_changed",
+            "coaching_changed",
+            "feedback_changed",
+            "decision_logged",
         }
 ```
 
@@ -1547,6 +1560,7 @@ Create `logos/engine/reactive_rules.py`:
 Each rule maps a filesystem trigger to a list of actions that call
 existing agent/collector functions directly (no subprocess spawning).
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -1565,6 +1579,7 @@ _log = logging.getLogger("cockpit.engine.rules")
 async def _refresh_cache() -> str:
     """Refresh the cockpit data cache."""
     from cockpit.api.cache import cache
+
     await cache.refresh()
     return "cache refreshed"
 
@@ -1572,8 +1587,10 @@ async def _refresh_cache() -> str:
 async def _recalc_nudges() -> str:
     """Recalculate nudges (runs after cache refresh)."""
     from cockpit.data.nudges import collect_nudges
+
     result = await asyncio.to_thread(collect_nudges)
     from cockpit.api.cache import cache
+
     cache.nudges = result
     return f"{len(result)} nudges"
 
@@ -1581,8 +1598,10 @@ async def _recalc_nudges() -> str:
 async def _recalc_team_health() -> str:
     """Recalculate team health (runs after cache refresh)."""
     from cockpit.data.team_health import collect_team_health
+
     result = await asyncio.to_thread(collect_team_health)
     from cockpit.api.cache import cache
+
     cache.team_health = result
     return f"{len(result.teams)} teams"
 
@@ -1590,6 +1609,7 @@ async def _recalc_team_health() -> str:
 async def _ingest_document(path: Path) -> str:
     """Classify and route an inbox document."""
     from agents.ingest import classify_document, process_document
+
     doc_type = classify_document(path)
     result = await process_document(path, doc_type)
     return f"ingested as {result.doc_type.value}"
@@ -1598,6 +1618,7 @@ async def _ingest_document(path: Path) -> str:
 async def _extract_meeting(path: Path) -> str:
     """Extract structured data from a meeting file via LLM."""
     from agents.meeting_lifecycle import process_meeting, route_extractions
+
     extraction = await process_meeting(path)
     created = route_extractions(extraction, path)
     return f"extracted {len(created)} items"
@@ -1607,9 +1628,11 @@ async def _generate_prep(person_name: str) -> str:
     """Generate 1:1 prep for a person."""
     from agents.management_prep import generate_1on1_prep
     from shared.vault_writer import write_1on1_prep_to_vault
+
     prep = await generate_1on1_prep(person_name)
     # Format and save
     from agents.management_prep import format_prep_md
+
     md = format_prep_md(prep, person_name)
     write_1on1_prep_to_vault(person_name, md)
     return f"prep for {person_name}"
@@ -1620,6 +1643,7 @@ async def _generate_prep(person_name: str) -> str:
 
 def _rule_inbox_ingest() -> Rule:
     """New file in inbox/ → classify, route, and extract if transcript."""
+
     def trigger(evt: ChangeEvent) -> bool:
         return evt.subdirectory == "inbox" and evt.event_type == "created"
 
@@ -1651,6 +1675,7 @@ def _rule_inbox_ingest() -> Rule:
 
 def _rule_meeting_cascade() -> Rule:
     """Meeting file created/modified → refresh cache, optionally regenerate prep."""
+
     def trigger(evt: ChangeEvent) -> bool:
         return evt.subdirectory == "meetings" and evt.event_type in ("created", "modified")
 
@@ -1674,6 +1699,7 @@ def _rule_meeting_cascade() -> Rule:
 
 def _rule_person_changed() -> Rule:
     """Person file created/modified → refresh cache, recalc nudges + team health."""
+
     def trigger(evt: ChangeEvent) -> bool:
         return evt.subdirectory == "people" and evt.event_type in ("created", "modified")
 
@@ -1711,6 +1737,7 @@ def _rule_person_changed() -> Rule:
 
 def _rule_coaching_changed() -> Rule:
     """Coaching file created/modified → refresh cache, recalc nudges."""
+
     def trigger(evt: ChangeEvent) -> bool:
         return evt.subdirectory == "coaching" and evt.event_type in ("created", "modified")
 
@@ -1741,6 +1768,7 @@ def _rule_coaching_changed() -> Rule:
 
 def _rule_feedback_changed() -> Rule:
     """Feedback file created/modified → refresh cache, recalc nudges."""
+
     def trigger(evt: ChangeEvent) -> bool:
         return evt.subdirectory == "feedback" and evt.event_type in ("created", "modified")
 
@@ -1771,6 +1799,7 @@ def _rule_feedback_changed() -> Rule:
 
 def _rule_decision_logged() -> Rule:
     """Decision file created → refresh cache."""
+
     def trigger(evt: ChangeEvent) -> bool:
         return evt.subdirectory == "decisions" and evt.event_type == "created"
 
@@ -1829,6 +1858,7 @@ Create `tests/test_engine_integration.py`:
 
 ```python
 """Integration tests for the ReactiveEngine — watcher → rules → executor → delivery."""
+
 import asyncio
 from pathlib import Path
 from unittest.mock import patch, AsyncMock, MagicMock
@@ -1900,6 +1930,7 @@ Update `logos/engine/__init__.py`:
 
 ```python
 """Reactive engine — filesystem-watching event loop for automated cascades."""
+
 from __future__ import annotations
 
 import asyncio
@@ -1933,17 +1964,15 @@ class ReactiveEngine:
         action_timeout_s: float | None = None,
     ):
         self._data_dir = data_dir or DATA_DIR
-        self._enabled = enabled if enabled is not None else (
-            os.environ.get("ENGINE_ENABLED", "true").lower() == "true"
+        self._enabled = (
+            enabled
+            if enabled is not None
+            else (os.environ.get("ENGINE_ENABLED", "true").lower() == "true")
         )
         _debounce = debounce_ms or int(os.environ.get("ENGINE_DEBOUNCE_MS", "200"))
         _llm = llm_concurrency or int(os.environ.get("ENGINE_LLM_CONCURRENCY", "2"))
-        _delivery = delivery_interval_s or int(
-            os.environ.get("ENGINE_DELIVERY_INTERVAL_S", "300")
-        )
-        _timeout = action_timeout_s or float(
-            os.environ.get("ENGINE_ACTION_TIMEOUT_S", "60")
-        )
+        _delivery = delivery_interval_s or int(os.environ.get("ENGINE_DELIVERY_INTERVAL_S", "300"))
+        _timeout = action_timeout_s or float(os.environ.get("ENGINE_ACTION_TIMEOUT_S", "60"))
 
         self._registry = build_default_rules()
         self._executor = PhasedExecutor(llm_concurrency=_llm, action_timeout_s=_timeout)
@@ -1994,25 +2023,29 @@ class ReactiveEngine:
 
         # Queue delivery items for completed actions
         for name, result in plan.results.items():
-            self._delivery.enqueue(DeliveryItem(
-                title=f"{name}: {result}" if isinstance(result, str) else name,
-                detail=f"Triggered by {event.event_type} in {event.subdirectory}/",
-                priority="medium",
-                category="generated",
-                source_action=name,
-                timestamp=event.timestamp,
-            ))
+            self._delivery.enqueue(
+                DeliveryItem(
+                    title=f"{name}: {result}" if isinstance(result, str) else name,
+                    detail=f"Triggered by {event.event_type} in {event.subdirectory}/",
+                    priority="medium",
+                    category="generated",
+                    source_action=name,
+                    timestamp=event.timestamp,
+                )
+            )
 
         # Errors get warning-level delivery items
         for name, error in getattr(plan, "errors", {}).items():
-            self._delivery.enqueue(DeliveryItem(
-                title=f"FAILED: {name}",
-                detail=f"Error: {error}",
-                priority="high",
-                category="error",
-                source_action=name,
-                timestamp=event.timestamp,
-            ))
+            self._delivery.enqueue(
+                DeliveryItem(
+                    title=f"FAILED: {name}",
+                    detail=f"Error: {error}",
+                    priority="high",
+                    category="error",
+                    source_action=name,
+                    timestamp=event.timestamp,
+                )
+            )
 
     def status(self) -> dict:
         """Return engine status for API."""
@@ -2029,10 +2062,7 @@ class ReactiveEngine:
 
     def rule_descriptions(self) -> list[dict]:
         """Return rule names and descriptions for API."""
-        return [
-            {"name": r.name, "description": r.description}
-            for r in self._registry.rules
-        ]
+        return [{"name": r.name, "description": r.description} for r in self._registry.rules]
 ```
 
 **Step 4: Run tests to verify they pass**
@@ -2061,6 +2091,7 @@ Create `tests/test_engine_routes.py`:
 
 ```python
 """Tests for cockpit.api.routes.engine — engine status endpoints."""
+
 from unittest.mock import patch, MagicMock
 from fastapi.testclient import TestClient
 
@@ -2068,12 +2099,18 @@ from fastapi.testclient import TestClient
 class TestEngineRoutes:
     def _client(self):
         from cockpit.api.app import app
+
         return TestClient(app, raise_server_errors=False)
 
     @patch("cockpit.api.routes.engine._get_engine")
     def test_engine_status(self, mock_engine):
         mock_engine.return_value = MagicMock(
-            status=lambda: {"running": True, "enabled": True, "rules_count": 6, "pending_delivery": 0}
+            status=lambda: {
+                "running": True,
+                "enabled": True,
+                "rules_count": 6,
+                "pending_delivery": 0,
+            }
         )
         resp = self._client().get("/api/engine/status")
         assert resp.status_code == 200
@@ -2108,6 +2145,7 @@ Create `logos/api/routes/engine.py`:
 
 ```python
 """Engine status API routes."""
+
 from __future__ import annotations
 
 from fastapi import APIRouter
@@ -2175,11 +2213,13 @@ from cockpit.api.routes.engine import router as engine_router, set_engine
 # Add router
 app.include_router(engine_router)
 
+
 # Update lifespan
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await start_refresh_loop()
     from cockpit.engine import ReactiveEngine
+
     engine = ReactiveEngine()
     set_engine(engine)
     await engine.start()
@@ -2212,6 +2252,7 @@ This test verifies the full cascade: write a person file → engine detects → 
 
 ```python
 """End-to-end test: file write → engine cascade → delivery item queued."""
+
 import asyncio
 from pathlib import Path
 from unittest.mock import patch, AsyncMock
@@ -2267,20 +2308,21 @@ class TestE2ECascade:
         assert any("refresh_cache" in t for t in titles)
 
     @patch("cockpit.engine.reactive_rules._refresh_cache", new_callable=AsyncMock)
-    async def test_coaching_file_triggers_nudge_recalc(
-        self, mock_refresh, tmp_path: Path
-    ):
+    async def test_coaching_file_triggers_nudge_recalc(self, mock_refresh, tmp_path: Path):
         mock_refresh.return_value = "ok"
 
         (tmp_path / "coaching").mkdir()
         engine = ReactiveEngine(
-            data_dir=tmp_path, enabled=True, debounce_ms=50,
+            data_dir=tmp_path,
+            enabled=True,
+            debounce_ms=50,
             delivery_interval_s=9999,
         )
 
         with patch(
             "cockpit.engine.reactive_rules._recalc_nudges",
-            new_callable=AsyncMock, return_value="ok",
+            new_callable=AsyncMock,
+            return_value="ok",
         ) as mock_nudges:
             await engine.start()
             try:

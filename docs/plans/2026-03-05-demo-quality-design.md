@@ -190,8 +190,8 @@ class DemoScene(BaseModel):
     key_points: list[str]
     screenshot: ScreenshotSpec
     visual_type: Literal["screenshot", "diagram", "chart"] = "screenshot"
-    diagram_spec: str | None = None       # D2 source or chart description
-    research_notes: str | None = None     # grounding for this scene's claims
+    diagram_spec: str | None = None  # D2 source or chart description
+    research_notes: str | None = None  # grounding for this scene's claims
 ```
 
 ---

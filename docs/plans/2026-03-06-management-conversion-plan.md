@@ -750,6 +750,7 @@ Remove the fast/slow distinction. Single 5-minute loop:
 ```python
 REFRESH_INTERVAL = 300  # seconds
 
+
 async def start_refresh_loop() -> None:
     await cache.refresh()
 
@@ -809,6 +810,7 @@ Add:
 @router.get("/team/health")
 async def get_team_health():
     return _response(_to_dict(cache.team_health))
+
 
 @router.get("/status")
 async def get_status():

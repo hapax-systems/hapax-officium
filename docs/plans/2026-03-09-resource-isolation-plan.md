@@ -211,8 +211,12 @@ Only `LITELLM_BASE` and `QDRANT_URL` change. Ollama stays at 11434 (shared).
 Remove lines 28-32:
 
 ```python
-WORK_VAULT_PATH: Path = Path(os.environ.get("WORK_VAULT_PATH", str(Path.home() / "Documents" / "Work")))
-PERSONAL_VAULT_PATH: Path = Path(os.environ.get("PERSONAL_VAULT_PATH", str(Path.home() / "Documents" / "Personal")))
+WORK_VAULT_PATH: Path = Path(
+    os.environ.get("WORK_VAULT_PATH", str(Path.home() / "Documents" / "Work"))
+)
+PERSONAL_VAULT_PATH: Path = Path(
+    os.environ.get("PERSONAL_VAULT_PATH", str(Path.home() / "Documents" / "Personal"))
+)
 
 # Backwards compat — most agents write to the work vault
 VAULT_PATH: Path = WORK_VAULT_PATH
@@ -289,6 +293,7 @@ Replace the entire file content with:
 Data source: TBD (vault excised, VS Code + Qdrant integration pending).
 Returns empty results until a new data source is implemented.
 """
+
 from __future__ import annotations
 
 import json
@@ -363,6 +368,7 @@ callers check return value for None already.
 
 Data egress will be reimplemented when VS Code integration is built.
 """
+
 from __future__ import annotations
 
 import logging
@@ -464,6 +470,7 @@ Replace the entire file content with:
 Vault excised from management cockpit. Returns empty ManagementSnapshot.
 Data source will be reimplemented with VS Code + Qdrant integration.
 """
+
 from __future__ import annotations
 
 import logging
@@ -476,6 +483,7 @@ _log = logging.getLogger(__name__)
 @dataclass
 class PersonState:
     """State of a single team member."""
+
     name: str
     team: str = ""
     role: str = ""
@@ -504,6 +512,7 @@ class PersonState:
 @dataclass
 class CoachingState:
     """State of a coaching hypothesis."""
+
     title: str
     person: str = ""
     status: str = "active"
@@ -516,6 +525,7 @@ class CoachingState:
 @dataclass
 class FeedbackState:
     """State of a feedback record."""
+
     title: str
     person: str = ""
     direction: str = "given"
@@ -530,6 +540,7 @@ class FeedbackState:
 @dataclass
 class ManagementSnapshot:
     """Aggregated management state."""
+
     people: list[PersonState] = field(default_factory=list)
     coaching: list[CoachingState] = field(default_factory=list)
     feedback: list[FeedbackState] = field(default_factory=list)

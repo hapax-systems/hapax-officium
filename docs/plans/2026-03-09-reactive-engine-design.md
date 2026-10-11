@@ -41,37 +41,40 @@ Dependency direction: `engine` imports from `data` and `agents`. Nothing imports
 ```python
 @dataclass
 class ChangeEvent:
-    path: Path                    # absolute path to changed file
-    subdirectory: str             # "people", "coaching", "meetings", "inbox", etc.
-    event_type: str               # "created" | "modified" | "deleted"
-    doc_type: str | None          # from frontmatter "type:" field, if parseable
+    path: Path  # absolute path to changed file
+    subdirectory: str  # "people", "coaching", "meetings", "inbox", etc.
+    event_type: str  # "created" | "modified" | "deleted"
+    doc_type: str | None  # from frontmatter "type:" field, if parseable
     timestamp: datetime
+
 
 @dataclass
 class Action:
-    name: str                     # e.g. "extract_meeting", "refresh_cache"
-    handler: Callable             # async callable
-    args: dict                    # kwargs for the handler
-    priority: int                 # lower = runs first within same phase
-    phase: int                    # 0=deterministic, 1=LLM synthesis, 2=delivery
-    depends_on: list[str]         # action names that must complete first
+    name: str  # e.g. "extract_meeting", "refresh_cache"
+    handler: Callable  # async callable
+    args: dict  # kwargs for the handler
+    priority: int  # lower = runs first within same phase
+    phase: int  # 0=deterministic, 1=LLM synthesis, 2=delivery
+    depends_on: list[str]  # action names that must complete first
+
 
 @dataclass
 class ActionPlan:
     trigger: ChangeEvent
     actions: list[Action]
     created_at: datetime
-    _results: dict[str, Any]      # filled as actions complete
+    _results: dict[str, Any]  # filled as actions complete
+
 
 @dataclass
 class DeliveryItem:
     title: str
     detail: str
-    priority: str                 # "critical" | "high" | "medium" | "low"
-    category: str                 # "generated", "detected", "warning", "error"
+    priority: str  # "critical" | "high" | "medium" | "low"
+    category: str  # "generated", "detected", "warning", "error"
     source_action: str
     timestamp: datetime
-    artifacts: list[Path]         # files created/updated
+    artifacts: list[Path]  # files created/updated
 ```
 
 ### Phase Model
@@ -147,9 +150,9 @@ Batch flush consolidates items into a single notification. Max 1 notification pe
 ```python
 # logos/api/app.py lifespan
 async def lifespan(app):
-    cache.start_refresh_loop()      # existing — kept as safety net
+    cache.start_refresh_loop()  # existing — kept as safety net
     engine = ReactiveEngine()
-    await engine.start()            # starts watcher + delivery queue
+    await engine.start()  # starts watcher + delivery queue
     yield
     await engine.stop()
 ```

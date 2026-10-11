@@ -129,6 +129,7 @@ git commit -m "feat: add Chatterbox TTS service under tts profile"
 
 ```python
 """Tests for VRAM management."""
+
 from __future__ import annotations
 
 from unittest.mock import patch, MagicMock
@@ -209,6 +210,7 @@ Expected: FAIL — `ModuleNotFoundError`
 
 ```python
 """VRAM management for GPU-intensive pipeline stages."""
+
 from __future__ import annotations
 
 import logging
@@ -285,9 +287,9 @@ def ensure_vram_available(required_mb: int = TTS_VRAM_MB, timeout: int = 30) -> 
     free = get_vram_free_mb()
     if free < required_mb:
         log.warning(
-            "VRAM still low after unload: %d MB free (need %d MB). "
-            "TTS may fail or be slow.",
-            free, required_mb,
+            "VRAM still low after unload: %d MB free (need %d MB). TTS may fail or be slow.",
+            free,
+            required_mb,
         )
 ```
 
@@ -316,6 +318,7 @@ git commit -m "feat(demo): VRAM manager — check free GPU memory, unload Ollama
 
 ```python
 """Tests for voice generation pipeline."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -379,6 +382,7 @@ Expected: FAIL — `ModuleNotFoundError`
 
 ```python
 """Voice generation pipeline using Chatterbox TTS API."""
+
 from __future__ import annotations
 
 import logging
@@ -496,6 +500,7 @@ git commit -m "feat(demo): voice generation pipeline via Chatterbox TTS API"
 
 ```python
 """Tests for Gruvbox title card generation."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -519,9 +524,7 @@ class TestGenerateTitleCard:
         assert path.exists()
 
     def test_custom_size(self, tmp_path):
-        path = generate_title_card(
-            "Small", tmp_path / "small.png", size=(1280, 720)
-        )
+        path = generate_title_card("Small", tmp_path / "small.png", size=(1280, 720))
         img = Image.open(path)
         assert img.size == (1280, 720)
 ```
@@ -535,6 +538,7 @@ Expected: FAIL — `ModuleNotFoundError`
 
 ```python
 """Gruvbox-styled title card generation with Pillow."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -542,10 +546,10 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 # Gruvbox dark palette
-BG_COLOR = (40, 40, 40)          # #282828
-FG_COLOR = (235, 219, 178)       # #ebdbb2
-ACCENT_COLOR = (250, 189, 47)    # #fabd2f (yellow)
-SUBTLE_COLOR = (168, 153, 132)   # #a89984 (gray)
+BG_COLOR = (40, 40, 40)  # #282828
+FG_COLOR = (235, 219, 178)  # #ebdbb2
+ACCENT_COLOR = (250, 189, 47)  # #fabd2f (yellow)
+SUBTLE_COLOR = (168, 153, 132)  # #a89984 (gray)
 
 
 def _get_font(size: int) -> ImageFont.FreeTypeFont:
@@ -634,6 +638,7 @@ git commit -m "feat(demo): Gruvbox-styled title card generator with Pillow"
 
 ```python
 """Tests for video assembly pipeline."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -655,6 +660,7 @@ class TestAssembleVideo:
 
         # Create minimal PNG files (1x1 pixel)
         from PIL import Image
+
         for name in ["01-dashboard", "02-chat"]:
             img = Image.new("RGB", (1920, 1080), (40, 40, 40))
             img.save(ss_dir / f"{name}.png")
@@ -694,6 +700,7 @@ Expected: FAIL — `ModuleNotFoundError`
 
 ```python
 """Video assembly pipeline — screenshots + audio → MP4."""
+
 from __future__ import annotations
 
 import logging
@@ -834,7 +841,9 @@ git commit -m "feat(demo): video assembly pipeline — screenshots + audio → M
 In `agents/demo.py`, update the `--format` choices:
 
 ```python
-parser.add_argument("--format", choices=["slides", "video", "markdown-only"], default="slides", help="Output format")
+parser.add_argument(
+    "--format", choices=["slides", "video", "markdown-only"], default="slides", help="Output format"
+)
 ```
 
 **Step 2: Add video generation to `generate_demo()`**
@@ -842,69 +851,67 @@ parser.add_argument("--format", choices=["slides", "video", "markdown-only"], de
 After the existing slide rendering block in `generate_demo()`, add video generation when `format == "video"`:
 
 ```python
-    # 7. Generate video (if requested)
-    if format == "video":
-        from agents.demo_pipeline.vram import ensure_vram_available
-        from agents.demo_pipeline.voice import (
-            check_tts_available,
-            generate_all_voice_segments,
-            VOICE_SAMPLE_PATH,
-        )
-        from agents.demo_pipeline.video import assemble_video
-        from agents.demo_pipeline.title_cards import generate_title_card
+# 7. Generate video (if requested)
+if format == "video":
+    from agents.demo_pipeline.vram import ensure_vram_available
+    from agents.demo_pipeline.voice import (
+        check_tts_available,
+        generate_all_voice_segments,
+        VOICE_SAMPLE_PATH,
+    )
+    from agents.demo_pipeline.video import assemble_video
+    from agents.demo_pipeline.title_cards import generate_title_card
 
-        # Check TTS service
-        if not check_tts_available():
-            raise ConnectionError(
-                "Chatterbox TTS not running. Start with: "
-                "cd ~/llm-stack && docker compose --profile tts up -d chatterbox"
-            )
-
-        # Ensure VRAM
-        progress("Checking GPU VRAM...")
-        ensure_vram_available()
-
-        # Generate voice segments
-        voice_segments = []
-        if script.intro_narration:
-            voice_segments.append(("00-intro", script.intro_narration))
-        for i, scene in enumerate(script.scenes, 1):
-            slug = re.sub(r"[^a-z0-9]+", "-", scene.title.lower()).strip("-")
-            voice_segments.append((f"{i:02d}-{slug}", scene.narration))
-        if script.outro_narration:
-            voice_segments.append(("99-outro", script.outro_narration))
-
-        audio_dir = demo_dir / "audio"
-        generate_all_voice_segments(
-            voice_segments, audio_dir, on_progress=progress
+    # Check TTS service
+    if not check_tts_available():
+        raise ConnectionError(
+            "Chatterbox TTS not running. Start with: "
+            "cd ~/llm-stack && docker compose --profile tts up -d chatterbox"
         )
 
-        # Generate title cards
-        progress("Generating title cards...")
-        intro_card = generate_title_card(
-            script.title,
-            demo_dir / "intro.png",
-            subtitle=f"Prepared for: {script.audience}",
-        )
-        outro_card = generate_title_card(
-            "Thank You",
-            demo_dir / "outro.png",
-        )
+    # Ensure VRAM
+    progress("Checking GPU VRAM...")
+    ensure_vram_available()
 
-        # Build duration map from scenes
-        durations = {scene.title: scene.duration_hint for scene in script.scenes}
+    # Generate voice segments
+    voice_segments = []
+    if script.intro_narration:
+        voice_segments.append(("00-intro", script.intro_narration))
+    for i, scene in enumerate(script.scenes, 1):
+        slug = re.sub(r"[^a-z0-9]+", "-", scene.title.lower()).strip("-")
+        voice_segments.append((f"{i:02d}-{slug}", scene.narration))
+    if script.outro_narration:
+        voice_segments.append(("99-outro", script.outro_narration))
 
-        # Assemble video
-        progress("Assembling video...")
-        await assemble_video(
-            intro_card=intro_card,
-            outro_card=outro_card,
-            screenshots=screenshot_map,
-            durations=durations,
-            audio_dir=audio_dir,
-            output_path=demo_dir / "demo.mp4",
-            on_progress=progress,
-        )
+    audio_dir = demo_dir / "audio"
+    generate_all_voice_segments(voice_segments, audio_dir, on_progress=progress)
+
+    # Generate title cards
+    progress("Generating title cards...")
+    intro_card = generate_title_card(
+        script.title,
+        demo_dir / "intro.png",
+        subtitle=f"Prepared for: {script.audience}",
+    )
+    outro_card = generate_title_card(
+        "Thank You",
+        demo_dir / "outro.png",
+    )
+
+    # Build duration map from scenes
+    durations = {scene.title: scene.duration_hint for scene in script.scenes}
+
+    # Assemble video
+    progress("Assembling video...")
+    await assemble_video(
+        intro_card=intro_card,
+        outro_card=outro_card,
+        screenshots=screenshot_map,
+        durations=durations,
+        audio_dir=audio_dir,
+        output_path=demo_dir / "demo.mp4",
+        on_progress=progress,
+    )
 ```
 
 **Step 3: Update cockpit agent registry**
@@ -912,8 +919,15 @@ After the existing slide rendering block in `generate_demo()`, add video generat
 In `logos/data/agents.py`, update the demo agent's `--format` flag choices:
 
 ```python
-AgentFlag("--format", "Output format", flag_type="value",
-          default="slides", choices=["slides", "video", "markdown-only"]),
+(
+    AgentFlag(
+        "--format",
+        "Output format",
+        flag_type="value",
+        default="slides",
+        choices=["slides", "video", "markdown-only"],
+    ),
+)
 ```
 
 **Step 4: Run all demo tests**
@@ -940,6 +954,7 @@ git commit -m "feat(demo): wire Phase 2 video pipeline into demo agent"
 
 ```python
 """Integration test for the video assembly pipeline (no actual TTS or GPU)."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -1055,10 +1070,29 @@ class TestMetadata:
     def test_metadata_fields(self):
         """Verify expected metadata fields exist."""
         import json
-        expected_keys = {"title", "audience", "scope", "scenes", "format", "duration", "timestamp", "output_dir"}
+
+        expected_keys = {
+            "title",
+            "audience",
+            "scope",
+            "scenes",
+            "format",
+            "duration",
+            "timestamp",
+            "output_dir",
+        }
         # This is a structural test — actual metadata is written during generate_demo()
         # which requires LLM. Just verify the schema expectation.
-        assert expected_keys == {"title", "audience", "scope", "scenes", "format", "duration", "timestamp", "output_dir"}
+        assert expected_keys == {
+            "title",
+            "audience",
+            "scope",
+            "scenes",
+            "format",
+            "duration",
+            "timestamp",
+            "output_dir",
+        }
 ```
 
 **Step 3: Run tests**
