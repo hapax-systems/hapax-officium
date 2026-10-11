@@ -24,6 +24,7 @@ Create `tests/test_config_ollama_url.py`:
 
 ```python
 """Test OLLAMA_URL env var support in shared/config."""
+
 from unittest.mock import patch
 
 
@@ -32,6 +33,7 @@ def test_ollama_url_default():
     with patch.dict("os.environ", {}, clear=False):
         import importlib
         import shared.config as cfg
+
         importlib.reload(cfg)
         assert cfg.OLLAMA_URL == "http://localhost:11434"
 
@@ -41,6 +43,7 @@ def test_ollama_url_from_env():
     with patch.dict("os.environ", {"OLLAMA_URL": "http://ollama:11434"}):
         import importlib
         import shared.config as cfg
+
         importlib.reload(cfg)
         assert cfg.OLLAMA_URL == "http://ollama:11434"
 
@@ -50,6 +53,7 @@ def test_ollama_client_uses_url():
     with patch.dict("os.environ", {"OLLAMA_URL": "http://ollama:11434"}):
         import importlib
         import shared.config as cfg
+
         importlib.reload(cfg)
         cfg._ollama_client = None  # reset singleton
         with patch("ollama.Client") as mock_client:
@@ -78,6 +82,7 @@ def _get_ollama_client():
     global _ollama_client
     if _ollama_client is None:
         import ollama
+
         _ollama_client = ollama.Client(host=OLLAMA_URL, timeout=120)
     return _ollama_client
 ```
@@ -113,6 +118,7 @@ Create `tests/test_ingest_ollama_url.py`:
 
 ```python
 """Test OLLAMA_URL env var support in ingest.py."""
+
 from unittest.mock import patch
 
 
@@ -121,6 +127,7 @@ def test_ingest_ollama_url_default():
     with patch.dict("os.environ", {}, clear=False):
         import importlib
         import agents.ingest as ing
+
         importlib.reload(ing)
         assert ing.OLLAMA_URL == "http://localhost:11434"
 
@@ -130,6 +137,7 @@ def test_ingest_ollama_url_from_env():
     with patch.dict("os.environ", {"OLLAMA_URL": "http://ollama:11434"}):
         import importlib
         import agents.ingest as ing
+
         importlib.reload(ing)
         assert ing.OLLAMA_URL == "http://ollama:11434"
 
@@ -139,6 +147,7 @@ def test_ingest_embed_uses_ollama_url():
     with patch.dict("os.environ", {"OLLAMA_URL": "http://ollama:11434"}):
         import importlib
         import agents.ingest as ing
+
         importlib.reload(ing)
         with patch("ollama.Client") as mock_cls:
             mock_client = mock_cls.return_value
@@ -166,6 +175,7 @@ Update the `embed()` function (around line 119-124):
 def embed(text: str, prefix: str = "search_document") -> list[float]:
     """Generate embedding via Ollama with nomic prefix."""
     import ollama
+
     client = ollama.Client(host=OLLAMA_URL)
     prefixed = f"{prefix}: {text}" if prefix else text
     result = client.embed(model=EMBEDDING_MODEL, input=prefixed)
@@ -198,16 +208,19 @@ Create `tests/test_scout_no_pass.py`:
 
 ```python
 """Test that scout no longer shells out to pass for TAVILY_API_KEY."""
+
 from unittest.mock import patch
 
 
 def test_scout_does_not_call_pass():
     """Scout should not call subprocess for pass store."""
     import agents.scout as scout
+
     # Grep the source for 'pass' subprocess call
     import inspect
+
     source = inspect.getsource(scout)
-    assert "pass\", \"show\"" not in source, "scout.py still contains pass subprocess call"
+    assert 'pass", "show"' not in source, "scout.py still contains pass subprocess call"
 
 
 def test_scout_exits_without_tavily_key():
@@ -215,6 +228,7 @@ def test_scout_exits_without_tavily_key():
     with patch.dict("os.environ", {"TAVILY_API_KEY": ""}, clear=False):
         import importlib
         import agents.scout as scout
+
         importlib.reload(scout)
         assert scout.TAVILY_API_KEY == ""
 ```
@@ -263,6 +277,7 @@ Create `tests/test_notify_display.py`:
 
 ```python
 """Test that notify-send is skipped when no display server is available."""
+
 from unittest.mock import patch
 
 
@@ -270,6 +285,7 @@ def test_send_desktop_skips_without_display():
     """_send_desktop returns False immediately when no DISPLAY or WAYLAND_DISPLAY."""
     with patch.dict("os.environ", {}, clear=True):
         from shared.notify import _send_desktop
+
         with patch("subprocess.run") as mock_run:
             result = _send_desktop("title", "message")
             assert result is False
@@ -280,6 +296,7 @@ def test_send_desktop_runs_with_display():
     """_send_desktop attempts notify-send when DISPLAY is set."""
     with patch.dict("os.environ", {"DISPLAY": ":0"}, clear=True):
         from shared.notify import _send_desktop
+
         with patch("subprocess.run") as mock_run:
             mock_run.return_value.returncode = 0
             result = _send_desktop("title", "message")
@@ -290,6 +307,7 @@ def test_send_desktop_runs_with_wayland():
     """_send_desktop attempts notify-send when WAYLAND_DISPLAY is set."""
     with patch.dict("os.environ", {"WAYLAND_DISPLAY": "wayland-0"}, clear=True):
         from shared.notify import _send_desktop
+
         with patch("subprocess.run") as mock_run:
             mock_run.return_value.returncode = 0
             result = _send_desktop("title", "message")
@@ -357,12 +375,14 @@ Create `tests/test_hardcoded_urls.py`:
 
 ```python
 """Test that shared modules don't have hardcoded localhost URLs for containerized services."""
+
 import inspect
 
 
 def test_capacity_no_hardcoded_qdrant_url():
     """capacity.py should not hardcode localhost:6333."""
     import shared.capacity as cap
+
     source = inspect.getsource(cap)
     assert "localhost:6333" not in source, "capacity.py still has hardcoded Qdrant URL"
 
@@ -370,6 +390,7 @@ def test_capacity_no_hardcoded_qdrant_url():
 def test_health_correlator_no_hardcoded_langfuse_url():
     """health_correlator.py should not hardcode localhost:3000."""
     import shared.health_correlator as hc
+
     source = inspect.getsource(hc)
     assert "localhost:3000" not in source, "health_correlator.py still has hardcoded Langfuse URL"
 ```

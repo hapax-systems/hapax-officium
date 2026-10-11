@@ -259,6 +259,7 @@ def check_axiom_compliance(situation: str, axiom_id: str | None = None) -> str:
     #    c. If no matches: return axiom text + T0/T1 implications
     # 3. Format as structured guidance for the agent
 
+
 def record_axiom_decision(
     axiom_id: str,
     situation: str,

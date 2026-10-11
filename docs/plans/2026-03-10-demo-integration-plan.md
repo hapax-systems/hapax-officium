@@ -27,6 +27,7 @@ Validates SimulatedEvent objects against workflow-semantics.yaml. Rejects events
 ```python
 # tests/test_simulator_validation.py
 """Tests for event validation against workflow-semantics.yaml."""
+
 from __future__ import annotations
 
 from agents.simulator_pipeline.models import SimulatedEvent
@@ -90,8 +91,9 @@ class TestValidateEvents:
         events = [
             _event(),  # valid
             _event(workflow_type="bogus", subdirectory="nope"),  # invalid
-            _event(workflow_type="decision", subdirectory="decisions",
-                   filename="2026-03-05-ci.md"),  # valid
+            _event(
+                workflow_type="decision", subdirectory="decisions", filename="2026-03-05-ci.md"
+            ),  # valid
         ]
         result = validate_events(events, _VALID_WORKFLOWS)
         assert len(result) == 2
@@ -120,6 +122,7 @@ Expected: FAIL (cannot import validate_events)
 Rejects events with unknown workflow types, mismatched subdirectories,
 or empty filenames. Logs warnings for each rejected event.
 """
+
 from __future__ import annotations
 
 import logging
@@ -156,7 +159,9 @@ def validate_events(
         if actual_subdir != expected_subdir:
             _log.warning(
                 "Rejected event: subdirectory mismatch for %s (got=%s, expected=%s)",
-                event.workflow_type, event.subdirectory, expected_subdir,
+                event.workflow_type,
+                event.subdirectory,
+                expected_subdir,
             )
             continue
 
@@ -196,66 +201,67 @@ Wire validation into `generate_tick_events()` and pass workflow specs from the s
 Append to `tests/test_simulator_event_gen.py`:
 
 ```python
-    async def test_validates_events_when_workflows_provided(self):
-        """Events are validated against valid_workflows when provided."""
-        mock_events = [
-            SimulatedEvent(
-                date="2026-03-05",
-                workflow_type="one_on_one",
-                subdirectory="meetings",
-                filename="2026-03-05-alice-1on1.md",
-                participant="Alice",
-                topics=["project status"],
-                metadata={"type": "meeting", "meeting-type": "one-on-one"},
-            ),
-            SimulatedEvent(
-                date="2026-03-05",
-                workflow_type="bogus_type",
-                subdirectory="bogus",
-                filename="2026-03-05-bogus.md",
-                topics=["nothing"],
-                metadata={"type": "bogus"},
-            ),
-        ]
+async def test_validates_events_when_workflows_provided(self):
+    """Events are validated against valid_workflows when provided."""
+    mock_events = [
+        SimulatedEvent(
+            date="2026-03-05",
+            workflow_type="one_on_one",
+            subdirectory="meetings",
+            filename="2026-03-05-alice-1on1.md",
+            participant="Alice",
+            topics=["project status"],
+            metadata={"type": "meeting", "meeting-type": "one-on-one"},
+        ),
+        SimulatedEvent(
+            date="2026-03-05",
+            workflow_type="bogus_type",
+            subdirectory="bogus",
+            filename="2026-03-05-bogus.md",
+            topics=["nothing"],
+            metadata={"type": "bogus"},
+        ),
+    ]
 
-        mock_result = MagicMock()
-        mock_result.output = mock_events
+    mock_result = MagicMock()
+    mock_result.output = mock_events
 
-        valid_workflows = {
-            "one_on_one": {"subdirectory": "meetings/"},
-        }
+    valid_workflows = {
+        "one_on_one": {"subdirectory": "meetings/"},
+    }
 
-        with patch("agents.simulator_pipeline.event_gen._event_agent") as mock_agent:
-            mock_agent.run = AsyncMock(return_value=mock_result)
-            events = await generate_tick_events(
-                prompt="Simulate...",
-                valid_workflows=valid_workflows,
-            )
+    with patch("agents.simulator_pipeline.event_gen._event_agent") as mock_agent:
+        mock_agent.run = AsyncMock(return_value=mock_result)
+        events = await generate_tick_events(
+            prompt="Simulate...",
+            valid_workflows=valid_workflows,
+        )
 
-        assert len(events) == 1
-        assert events[0].workflow_type == "one_on_one"
+    assert len(events) == 1
+    assert events[0].workflow_type == "one_on_one"
 
-    async def test_skips_validation_when_no_workflows(self):
-        """Events are not validated when valid_workflows is None."""
-        mock_events = [
-            SimulatedEvent(
-                date="2026-03-05",
-                workflow_type="totally_unknown",
-                subdirectory="whatever",
-                filename="2026-03-05-thing.md",
-                topics=["stuff"],
-                metadata={"type": "thing"},
-            ),
-        ]
 
-        mock_result = MagicMock()
-        mock_result.output = mock_events
+async def test_skips_validation_when_no_workflows(self):
+    """Events are not validated when valid_workflows is None."""
+    mock_events = [
+        SimulatedEvent(
+            date="2026-03-05",
+            workflow_type="totally_unknown",
+            subdirectory="whatever",
+            filename="2026-03-05-thing.md",
+            topics=["stuff"],
+            metadata={"type": "thing"},
+        ),
+    ]
 
-        with patch("agents.simulator_pipeline.event_gen._event_agent") as mock_agent:
-            mock_agent.run = AsyncMock(return_value=mock_result)
-            events = await generate_tick_events(prompt="Simulate...")
+    mock_result = MagicMock()
+    mock_result.output = mock_events
 
-        assert len(events) == 1  # no validation, passes through
+    with patch("agents.simulator_pipeline.event_gen._event_agent") as mock_agent:
+        mock_agent.run = AsyncMock(return_value=mock_result)
+        events = await generate_tick_events(prompt="Simulate...")
+
+    assert len(events) == 1  # no validation, passes through
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -289,6 +295,7 @@ async def generate_tick_events(
     # Validate against workflow-semantics if provided
     if valid_workflows is not None:
         from agents.simulator_pipeline.validation import validate_events
+
         events = validate_events(events, valid_workflows)
 
     return events
@@ -339,6 +346,7 @@ Runs the bootstrap Phase 4 agent pipeline against a sim_dir.
 ```python
 # tests/test_simulator_warmup.py
 """Tests for post-simulation warm-up."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -351,15 +359,21 @@ from shared.config import config
 class TestRunWarmup:
     async def test_calls_all_agents_in_order(self, tmp_path: Path):
         """Warm-up calls all 5 agents sequentially."""
-        with patch("agents.simulator_pipeline.warmup._run_activity") as mock_act, \
-             patch("agents.simulator_pipeline.warmup._run_profiler",
-                   new_callable=AsyncMock) as mock_prof, \
-             patch("agents.simulator_pipeline.warmup._run_briefing",
-                   new_callable=AsyncMock) as mock_brief, \
-             patch("agents.simulator_pipeline.warmup._run_digest",
-                   new_callable=AsyncMock) as mock_digest, \
-             patch("agents.simulator_pipeline.warmup._run_snapshot",
-                   new_callable=AsyncMock) as mock_snap:
+        with (
+            patch("agents.simulator_pipeline.warmup._run_activity") as mock_act,
+            patch(
+                "agents.simulator_pipeline.warmup._run_profiler", new_callable=AsyncMock
+            ) as mock_prof,
+            patch(
+                "agents.simulator_pipeline.warmup._run_briefing", new_callable=AsyncMock
+            ) as mock_brief,
+            patch(
+                "agents.simulator_pipeline.warmup._run_digest", new_callable=AsyncMock
+            ) as mock_digest,
+            patch(
+                "agents.simulator_pipeline.warmup._run_snapshot", new_callable=AsyncMock
+            ) as mock_snap,
+        ):
             await run_warmup(tmp_path)
             mock_act.assert_called_once()
             mock_prof.assert_called_once()
@@ -376,15 +390,17 @@ class TestRunWarmup:
             nonlocal captured_dir
             captured_dir = config.data_dir
 
-        with patch("agents.simulator_pipeline.warmup._run_activity"), \
-             patch("agents.simulator_pipeline.warmup._run_profiler",
-                   new_callable=AsyncMock, side_effect=capture_dir), \
-             patch("agents.simulator_pipeline.warmup._run_briefing",
-                   new_callable=AsyncMock), \
-             patch("agents.simulator_pipeline.warmup._run_digest",
-                   new_callable=AsyncMock), \
-             patch("agents.simulator_pipeline.warmup._run_snapshot",
-                   new_callable=AsyncMock):
+        with (
+            patch("agents.simulator_pipeline.warmup._run_activity"),
+            patch(
+                "agents.simulator_pipeline.warmup._run_profiler",
+                new_callable=AsyncMock,
+                side_effect=capture_dir,
+            ),
+            patch("agents.simulator_pipeline.warmup._run_briefing", new_callable=AsyncMock),
+            patch("agents.simulator_pipeline.warmup._run_digest", new_callable=AsyncMock),
+            patch("agents.simulator_pipeline.warmup._run_snapshot", new_callable=AsyncMock),
+        ):
             await run_warmup(tmp_path)
 
         assert captured_dir == tmp_path
@@ -392,16 +408,24 @@ class TestRunWarmup:
 
     async def test_individual_failure_does_not_abort(self, tmp_path: Path):
         """If one agent fails, the rest still run."""
-        with patch("agents.simulator_pipeline.warmup._run_activity",
-                   side_effect=RuntimeError("activity failed")), \
-             patch("agents.simulator_pipeline.warmup._run_profiler",
-                   new_callable=AsyncMock) as mock_prof, \
-             patch("agents.simulator_pipeline.warmup._run_briefing",
-                   new_callable=AsyncMock) as mock_brief, \
-             patch("agents.simulator_pipeline.warmup._run_digest",
-                   new_callable=AsyncMock) as mock_digest, \
-             patch("agents.simulator_pipeline.warmup._run_snapshot",
-                   new_callable=AsyncMock) as mock_snap:
+        with (
+            patch(
+                "agents.simulator_pipeline.warmup._run_activity",
+                side_effect=RuntimeError("activity failed"),
+            ),
+            patch(
+                "agents.simulator_pipeline.warmup._run_profiler", new_callable=AsyncMock
+            ) as mock_prof,
+            patch(
+                "agents.simulator_pipeline.warmup._run_briefing", new_callable=AsyncMock
+            ) as mock_brief,
+            patch(
+                "agents.simulator_pipeline.warmup._run_digest", new_callable=AsyncMock
+            ) as mock_digest,
+            patch(
+                "agents.simulator_pipeline.warmup._run_snapshot", new_callable=AsyncMock
+            ) as mock_snap,
+        ):
             await run_warmup(tmp_path)
             # All subsequent agents still called despite activity failure
             mock_prof.assert_called_once()
@@ -426,6 +450,7 @@ activity metrics, profiler, briefing, digest, team snapshot.
 Each agent is called with try/except so individual failures
 don't abort the warm-up.
 """
+
 from __future__ import annotations
 
 import logging
@@ -492,16 +517,17 @@ def _run_activity() -> None:
     from shared.config import PROFILES_DIR
 
     report = generate_management_report()
-    (PROFILES_DIR / "management-activity.json").write_text(
-        report.model_dump_json(indent=2)
-    )
+    (PROFILES_DIR / "management-activity.json").write_text(report.model_dump_json(indent=2))
 
 
 async def _run_profiler() -> None:
     """Run management_profiler synthesis."""
     from agents.management_profiler import (
-        generate_and_load_management_facts, synthesize_profile,
-        build_profile, save_profile, load_existing_profile,
+        generate_and_load_management_facts,
+        synthesize_profile,
+        build_profile,
+        save_profile,
+        load_existing_profile,
     )
 
     facts = generate_and_load_management_facts()
@@ -520,9 +546,7 @@ async def _run_briefing() -> None:
     briefing = await generate_briefing()
     md = format_briefing_md(briefing)
     write_briefing_to_vault(md)
-    (PROFILES_DIR / "management-briefing.json").write_text(
-        briefing.model_dump_json(indent=2)
-    )
+    (PROFILES_DIR / "management-briefing.json").write_text(briefing.model_dump_json(indent=2))
 
 
 async def _run_digest() -> None:
@@ -531,9 +555,7 @@ async def _run_digest() -> None:
     from shared.config import PROFILES_DIR
 
     digest = await generate_digest()
-    (PROFILES_DIR / "digest.json").write_text(
-        digest.model_dump_json(indent=2)
-    )
+    (PROFILES_DIR / "digest.json").write_text(digest.model_dump_json(indent=2))
 
 
 async def _run_snapshot() -> None:
@@ -572,6 +594,7 @@ Add `--simulate` flag and orchestration to the demo agent.
 ```python
 # tests/test_demo_simulate.py
 """Tests for demo agent --simulate integration."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -601,11 +624,12 @@ class TestDemoSimulateOrchestration:
             demo_dir.mkdir(exist_ok=True)
             return demo_dir
 
-        with patch("agents.demo.run_simulation", side_effect=mock_run_sim), \
-             patch("agents.demo.run_warmup", side_effect=mock_warmup), \
-             patch("agents.demo.generate_demo", side_effect=mock_generate_demo), \
-             patch("agents.demo.config") as mock_config:
-
+        with (
+            patch("agents.demo.run_simulation", side_effect=mock_run_sim),
+            patch("agents.demo.run_warmup", side_effect=mock_warmup),
+            patch("agents.demo.generate_demo", side_effect=mock_generate_demo),
+            patch("agents.demo.config") as mock_config,
+        ):
             from agents.demo import _run_simulated_demo
 
             await _run_simulated_demo(
@@ -638,10 +662,11 @@ class TestDemoSimulateOrchestration:
         async def mock_generate_demo(request, **kwargs):
             raise RuntimeError("demo failed")
 
-        with patch("agents.demo.run_simulation", side_effect=mock_run_sim), \
-             patch("agents.demo.run_warmup", side_effect=mock_warmup), \
-             patch("agents.demo.generate_demo", side_effect=mock_generate_demo):
-
+        with (
+            patch("agents.demo.run_simulation", side_effect=mock_run_sim),
+            patch("agents.demo.run_warmup", side_effect=mock_warmup),
+            patch("agents.demo.generate_demo", side_effect=mock_generate_demo),
+        ):
             from agents.demo import _run_simulated_demo
 
             try:
@@ -728,14 +753,24 @@ async def _run_simulated_demo(
 In the `main()` function in `agents/demo.py`, add these arguments after the existing `parser.add_argument` calls (before `args = parser.parse_args()`):
 
 ```python
-    parser.add_argument("--simulate", action="store_true",
-                        help="Run temporal simulation before demo generation")
-    parser.add_argument("--window", type=str, default="30d",
-                        help="Simulation window (e.g. 7d, 30d, 90d)")
-    parser.add_argument("--variant", type=str, default="experienced-em",
-                        help="Role variant (new-em, experienced-em, senior-em)")
-    parser.add_argument("--scenario", type=str, default=None,
-                        help="Scenario modifier (pre-quarterly, post-incident, etc.)")
+parser.add_argument(
+    "--simulate", action="store_true", help="Run temporal simulation before demo generation"
+)
+parser.add_argument(
+    "--window", type=str, default="30d", help="Simulation window (e.g. 7d, 30d, 90d)"
+)
+parser.add_argument(
+    "--variant",
+    type=str,
+    default="experienced-em",
+    help="Role variant (new-em, experienced-em, senior-em)",
+)
+parser.add_argument(
+    "--scenario",
+    type=str,
+    default=None,
+    help="Scenario modifier (pre-quarterly, post-incident, etc.)",
+)
 ```
 
 Then, in `main()`, add a branch for `--simulate` before the existing `if args.json:` block. Replace the section starting at `if args.json:` through to the end of the `else` block:

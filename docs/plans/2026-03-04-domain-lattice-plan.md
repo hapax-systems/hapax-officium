@@ -496,13 +496,9 @@ Expected: FAIL with `ImportError` — `DOMAIN_REGISTRY_PATH` and `load_domain_re
 In `~/projects/logos/data/knowledge_sufficiency.py`, add after line 23 (after `KNOWLEDGE_MODEL_PATH`):
 
 ```python
-DOMAIN_REGISTRY_PATH = (
-    Path.home() / "projects" / "hapaxromana" / "domains" / "registry.yaml"
-)
+DOMAIN_REGISTRY_PATH = Path.home() / "projects" / "hapaxromana" / "domains" / "registry.yaml"
 
-KNOWLEDGE_DIR = (
-    Path.home() / "projects" / "hapaxromana" / "knowledge"
-)
+KNOWLEDGE_DIR = Path.home() / "projects" / "hapaxromana" / "knowledge"
 ```
 
 Add a new function after `load_knowledge_model()` (after line 202):
@@ -559,6 +555,7 @@ class TestMultiDomainAudit:
     def test_management_report_matches_single_domain(self) -> None:
         """Multi-domain management report matches single-domain collect_knowledge_gaps."""
         from cockpit.data.knowledge_sufficiency import collect_knowledge_gaps
+
         single = collect_knowledge_gaps()
         multi = collect_all_domain_gaps()
         if "management" in multi:
@@ -584,6 +581,7 @@ class TestMultiDomainAudit:
         """Returns empty dict if registry file doesn't exist."""
         from cockpit.data.knowledge_sufficiency import DOMAIN_REGISTRY_PATH
         import tempfile
+
         # This tests the safe fallback — can't easily mock the path,
         # so we just verify the function handles gracefully.
         reports = collect_all_domain_gaps()
@@ -630,7 +628,11 @@ def collect_all_domain_gaps(
         if not domain_id or not model_ref:
             continue
 
-        model_path = KNOWLEDGE_DIR / model_ref.split("/", 1)[-1] if "/" in model_ref else KNOWLEDGE_DIR / model_ref
+        model_path = (
+            KNOWLEDGE_DIR / model_ref.split("/", 1)[-1]
+            if "/" in model_ref
+            else KNOWLEDGE_DIR / model_ref
+        )
         if not model_path.is_file():
             continue
 
@@ -687,6 +689,7 @@ class TestDomainScopedNudges:
             satisfied=False,
         )
         from cockpit.data.knowledge_sufficiency import gaps_to_nudges
+
         nudges = gaps_to_nudges([gap], domain_id="music")
         assert len(nudges) == 1
         assert nudges[0].source_id == "knowledge:music:test-req"
@@ -703,6 +706,7 @@ class TestDomainScopedNudges:
             satisfied=False,
         )
         from cockpit.data.knowledge_sufficiency import gaps_to_nudges
+
         nudges = gaps_to_nudges([gap])
         assert nudges[0].source_id == "knowledge:test-req"
 ```
@@ -731,11 +735,15 @@ def gaps_to_nudges(gaps: list[KnowledgeGap], *, domain_id: str = "") -> list["Nu
 
 Change the source_id line from:
 ```python
-            source_id=f"knowledge:{gap.requirement_id}",
+source_id = (f"knowledge:{gap.requirement_id}",)
 ```
 To:
 ```python
-            source_id=f"knowledge:{domain_id}:{gap.requirement_id}" if domain_id else f"knowledge:{gap.requirement_id}",
+source_id = (
+    f"knowledge:{domain_id}:{gap.requirement_id}"
+    if domain_id
+    else f"knowledge:{gap.requirement_id}",
+)
 ```
 
 **Step 4: Update _collect_knowledge_sufficiency_nudges**
@@ -747,6 +755,7 @@ def _collect_knowledge_sufficiency_nudges(nudges: list[Nudge]) -> None:
     """Generate nudges from knowledge sufficiency gaps across all domains."""
     try:
         from cockpit.data.knowledge_sufficiency import collect_all_domain_gaps, gaps_to_nudges
+
         reports = collect_all_domain_gaps()
         for domain_id, report in reports.items():
             nudges.extend(gaps_to_nudges(report.gaps, domain_id=domain_id))
@@ -796,6 +805,7 @@ Create `~/projects/tests/test_momentum.py`:
 
 ```python
 """Tests for cockpit.data.momentum — domain momentum tracking."""
+
 from __future__ import annotations
 
 from datetime import datetime, timezone, timedelta
@@ -950,6 +960,7 @@ Create `~/projects/logos/data/momentum.py`:
 Computes continuous signals per domain from vault modification timestamps
 and other activity sources. Zero LLM calls.
 """
+
 from __future__ import annotations
 
 import json
@@ -971,9 +982,9 @@ class MomentumVector:
     """Per-domain momentum summary."""
 
     domain_id: str
-    direction: str      # accelerating | steady | decelerating | dormant
-    regularity: str     # regular | irregular | sporadic
-    alignment: str      # improving | plateaued | regressing
+    direction: str  # accelerating | steady | decelerating | dormant
+    regularity: str  # regular | irregular | sporadic
+    alignment: str  # improving | plateaued | regressing
     activity_rate: float
     regularity_cv: float
     alignment_slope: float
@@ -1143,9 +1154,7 @@ def _collect_vault_activity(
         for md_file in folder.glob("**/*.md"):
             try:
                 mtime = md_file.stat().st_mtime
-                timestamps.append(
-                    datetime.fromtimestamp(mtime, tz=timezone.utc)
-                )
+                timestamps.append(datetime.fromtimestamp(mtime, tz=timezone.utc))
             except OSError:
                 continue
 
@@ -1248,16 +1257,18 @@ def collect_domain_momentum(
             score_history.append(current_score)
         slope = compute_alignment_slope(score_history)
 
-        vectors.append(MomentumVector(
-            domain_id=domain_id,
-            direction=classify_direction(rate),
-            regularity=classify_regularity(cv),
-            alignment=classify_alignment(slope),
-            activity_rate=round(rate, 3),
-            regularity_cv=round(cv, 3),
-            alignment_slope=round(slope, 4),
-            computed_at=now_iso,
-        ))
+        vectors.append(
+            MomentumVector(
+                domain_id=domain_id,
+                direction=classify_direction(rate),
+                regularity=classify_regularity(cv),
+                alignment=classify_alignment(slope),
+                activity_rate=round(rate, 3),
+                regularity_cv=round(cv, 3),
+                alignment_slope=round(slope, 4),
+                computed_at=now_iso,
+            )
+        )
 
     return DomainMomentum(vectors=vectors, computed_at=now_iso)
 ```
@@ -1329,6 +1340,7 @@ class TestPersonStateDomains:
         """PersonState includes domains list."""
         from cockpit.data.management import PersonState
         import inspect
+
         fields = {f.name for f in __import__("dataclasses").fields(PersonState)}
         assert "domains" in fields
 
@@ -1336,6 +1348,7 @@ class TestPersonStateDomains:
         """PersonState includes relationship field."""
         from cockpit.data.management import PersonState
         import inspect
+
         fields = {f.name for f in __import__("dataclasses").fields(PersonState)}
         assert "relationship" in fields
 ```
@@ -1415,6 +1428,7 @@ Create `~/projects/tests/test_emergence.py`:
 
 ```python
 """Tests for cockpit.data.emergence — undomained activity detection."""
+
 from __future__ import annotations
 
 from datetime import datetime, timezone, timedelta
@@ -1480,13 +1494,15 @@ class TestClustering:
         events = []
         for i in range(CANDIDATE_MIN_EVENTS + 1):
             day_offset = (i % 3) * 7  # spread across 3 weeks
-            events.append(UndomainedEvent(
-                timestamp=(base + timedelta(days=day_offset, hours=i)).isoformat(),
-                source="vault",
-                description=f"woodworking project {i}",
-                keywords=["woodworking", "project", "tools"],
-                people=[],
-            ))
+            events.append(
+                UndomainedEvent(
+                    timestamp=(base + timedelta(days=day_offset, hours=i)).isoformat(),
+                    source="vault",
+                    description=f"woodworking project {i}",
+                    keywords=["woodworking", "project", "tools"],
+                    people=[],
+                )
+            )
         candidates = cluster_events(events)
         assert len(candidates) >= 1
         assert candidates[0].event_count >= CANDIDATE_MIN_EVENTS
@@ -1525,6 +1541,7 @@ overlap. Produces EmergenceCandidates when clusters cross thresholds.
 
 Zero LLM calls for detection. LLM only used for proposal narrative (not here).
 """
+
 from __future__ import annotations
 
 import json
@@ -1548,10 +1565,16 @@ BUFFER_PATH = Path.home() / ".cache" / "cockpit" / "undomained-activity.jsonl"
 CANDIDATES_PATH = Path.home() / ".cache" / "cockpit" / "emergence-candidates.json"
 
 # System folders to ignore (not operator activity)
-SYSTEM_FOLDERS = frozenset({
-    "30-system", "50-templates", "60-archive", "90-attachments",
-    ".obsidian", ".trash",
-})
+SYSTEM_FOLDERS = frozenset(
+    {
+        "30-system",
+        "50-templates",
+        "60-archive",
+        "90-attachments",
+        ".obsidian",
+        ".trash",
+    }
+)
 
 
 # ---------------------------------------------------------------------------
@@ -1564,7 +1587,7 @@ class UndomainedEvent:
     """A single activity event not attributed to any domain."""
 
     timestamp: str
-    source: str          # "vault" | "langfuse" | "qdrant"
+    source: str  # "vault" | "langfuse" | "qdrant"
     description: str
     keywords: list[str]
     people: list[str] = field(default_factory=list)
@@ -1575,9 +1598,9 @@ class EmergenceCandidate:
     """A cluster of undomained events that may represent a new domain."""
 
     candidate_id: str
-    label: str                  # suggested domain name
+    label: str  # suggested domain name
     event_count: int
-    week_span: int              # how many distinct weeks
+    week_span: int  # how many distinct weeks
     top_keywords: list[str]
     related_people: list[str]
     overlapping_domains: list[str]
@@ -1603,12 +1626,52 @@ def _extract_keywords(text: str) -> list[str]:
     """Extract simple keywords from text. No TF-IDF, just word frequency."""
     words = re.findall(r"[a-z]{3,}", text.lower())
     # Remove common stop words
-    stop = {"the", "and", "for", "are", "but", "not", "you", "all",
-            "can", "has", "her", "was", "one", "our", "this", "that",
-            "with", "from", "have", "will", "been", "they", "its",
-            "more", "some", "than", "other", "into", "could", "would",
-            "about", "which", "their", "what", "there", "when", "make",
-            "like", "just", "over", "such", "also", "after", "should"}
+    stop = {
+        "the",
+        "and",
+        "for",
+        "are",
+        "but",
+        "not",
+        "you",
+        "all",
+        "can",
+        "has",
+        "her",
+        "was",
+        "one",
+        "our",
+        "this",
+        "that",
+        "with",
+        "from",
+        "have",
+        "will",
+        "been",
+        "they",
+        "its",
+        "more",
+        "some",
+        "than",
+        "other",
+        "into",
+        "could",
+        "would",
+        "about",
+        "which",
+        "their",
+        "what",
+        "there",
+        "when",
+        "make",
+        "like",
+        "just",
+        "over",
+        "such",
+        "also",
+        "after",
+        "should",
+    }
     return [w for w in words if w not in stop]
 
 
@@ -1658,8 +1721,7 @@ def collect_undomained_events(
 
         # Check if file is under any domain's paths or system folder
         is_covered = any(
-            md_file == prefix or prefix in md_file.parents
-            for prefix in covered_prefixes
+            md_file == prefix or prefix in md_file.parents for prefix in covered_prefixes
         )
         if is_covered:
             continue
@@ -1673,13 +1735,15 @@ def collect_undomained_events(
         rel = md_file.relative_to(vp)
         keywords = _extract_keywords(f"{rel.stem} {content}")
 
-        events.append(UndomainedEvent(
-            timestamp=mtime.isoformat()[:19] + "Z",
-            source="vault",
-            description=f"Modified: {rel}",
-            keywords=keywords[:10],  # cap at 10
-            people=[],
-        ))
+        events.append(
+            UndomainedEvent(
+                timestamp=mtime.isoformat()[:19] + "Z",
+                source="vault",
+                description=f"Modified: {rel}",
+                keywords=keywords[:10],  # cap at 10
+                people=[],
+            )
+        )
 
     return events
 
@@ -1691,13 +1755,11 @@ def _load_domain_paths() -> dict[str, list[str]]:
             DOMAIN_REGISTRY_PATH,
             load_domain_registry,
         )
+
         if not DOMAIN_REGISTRY_PATH.is_file():
             return {}
         registry = load_domain_registry()
-        return {
-            d["id"]: d.get("vault_paths", [])
-            for d in registry.get("domains", [])
-        }
+        return {d["id"]: d.get("vault_paths", []) for d in registry.get("domains", [])}
     except Exception:
         return {}
 
@@ -1734,10 +1796,7 @@ def cluster_events(
         dominant = {kw for kw, _ in keyword_counter.most_common(CANDIDATE_MIN_KEYWORDS)}
 
     # Group events that share dominant keywords
-    cluster_events_list = [
-        e for e in events
-        if any(kw in dominant for kw in e.keywords)
-    ]
+    cluster_events_list = [e for e in events if any(kw in dominant for kw in e.keywords)]
 
     if len(cluster_events_list) < CANDIDATE_MIN_EVENTS:
         return []
@@ -1895,6 +1954,7 @@ Create `~/projects/tests/test_domain_health.py`:
 
 ```python
 """Tests for cockpit.data.domain_health — aggregated domain health."""
+
 from __future__ import annotations
 
 import pytest
@@ -1961,6 +2021,7 @@ Create `~/projects/logos/data/domain_health.py`:
 Single collector that produces a DomainHealthSnapshot suitable for
 the cockpit sidebar or a dedicated dashboard widget.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -1976,13 +2037,13 @@ class DomainStatus:
 
     domain_id: str
     domain_name: str
-    status: str              # active | dormant | proposed | retired
+    status: str  # active | dormant | proposed | retired
     sufficiency_score: float  # 0.0 - 1.0
     total_requirements: int
     satisfied_count: int
-    direction: str           # accelerating | steady | decelerating | dormant
-    regularity: str          # regular | irregular | sporadic
-    alignment: str           # improving | plateaued | regressing
+    direction: str  # accelerating | steady | decelerating | dormant
+    regularity: str  # regular | irregular | sporadic
+    alignment: str  # improving | plateaued | regressing
 
 
 @dataclass
@@ -1990,7 +2051,7 @@ class DomainHealthSnapshot:
     """Aggregated domain health across all domains."""
 
     domains: list[DomainStatus]
-    overall_score: float      # activity-weighted average
+    overall_score: float  # activity-weighted average
     emergence_candidate_count: int
     computed_at: str
 
@@ -2009,16 +2070,21 @@ def collect_domain_health(
             load_domain_registry,
             collect_all_domain_gaps,
         )
+
         if not DOMAIN_REGISTRY_PATH.is_file():
             return DomainHealthSnapshot(
-                domains=[], overall_score=1.0,
-                emergence_candidate_count=0, computed_at=now_iso,
+                domains=[],
+                overall_score=1.0,
+                emergence_candidate_count=0,
+                computed_at=now_iso,
             )
         registry = load_domain_registry()
     except Exception:
         return DomainHealthSnapshot(
-            domains=[], overall_score=1.0,
-            emergence_candidate_count=0, computed_at=now_iso,
+            domains=[],
+            overall_score=1.0,
+            emergence_candidate_count=0,
+            computed_at=now_iso,
         )
 
     # Sufficiency reports
@@ -2028,6 +2094,7 @@ def collect_domain_health(
     momentum_map: dict[str, tuple[str, str, str]] = {}
     try:
         from cockpit.data.momentum import collect_domain_momentum
+
         momentum = collect_domain_momentum(vault_path=vp)
         for v in momentum.vectors:
             momentum_map[v.domain_id] = (v.direction, v.regularity, v.alignment)
@@ -2038,6 +2105,7 @@ def collect_domain_health(
     emergence_count = 0
     try:
         from cockpit.data.emergence import collect_emergence
+
         emergence = collect_emergence(vault_path=vp)
         emergence_count = len(emergence.candidates)
     except Exception:
@@ -2053,17 +2121,19 @@ def collect_domain_health(
             domain_id, ("steady", "sporadic", "plateaued")
         )
 
-        statuses.append(DomainStatus(
-            domain_id=domain_id,
-            domain_name=domain_def.get("name", domain_id),
-            status=domain_def.get("status", "active"),
-            sufficiency_score=report.sufficiency_score if report else 0.0,
-            total_requirements=report.total_requirements if report else 0,
-            satisfied_count=report.satisfied_count if report else 0,
-            direction=direction,
-            regularity=regularity,
-            alignment=alignment,
-        ))
+        statuses.append(
+            DomainStatus(
+                domain_id=domain_id,
+                domain_name=domain_def.get("name", domain_id),
+                status=domain_def.get("status", "active"),
+                sufficiency_score=report.sufficiency_score if report else 0.0,
+                total_requirements=report.total_requirements if report else 0,
+                satisfied_count=report.satisfied_count if report else 0,
+                direction=direction,
+                regularity=regularity,
+                alignment=alignment,
+            )
+        )
 
     # Overall score: weighted average by activity (active domains weight 1.0,
     # dormant weight 0.1, others weight 0.5)
@@ -2114,6 +2184,7 @@ Create `~/projects/cockpit/widgets/domain_health.py`:
 
 ```python
 """DomainHealthWidget — per-domain sufficiency bars with momentum arrows."""
+
 from __future__ import annotations
 
 from rich.text import Text
@@ -2124,10 +2195,10 @@ from cockpit.data.domain_health import DomainHealthSnapshot, DomainStatus
 
 
 DIRECTION_ARROWS = {
-    "accelerating": "\u2191",   # ↑
-    "steady": "\u2192",         # →
-    "decelerating": "\u2193",   # ↓
-    "dormant": "\u25cb",        # ○
+    "accelerating": "\u2191",  # ↑
+    "steady": "\u2192",  # →
+    "decelerating": "\u2193",  # ↓
+    "dormant": "\u25cb",  # ○
 }
 
 BAR_WIDTH = 10
@@ -2174,8 +2245,10 @@ def render_domain_health(snapshot: DomainHealthSnapshot | None) -> Text:
         text.append(f" {arrow}\n")
 
     if snapshot.emergence_candidate_count > 0:
-        text.append(f"\n  \u26a1 {snapshot.emergence_candidate_count} emergence candidate(s)\n",
-                     style="yellow")
+        text.append(
+            f"\n  \u26a1 {snapshot.emergence_candidate_count} emergence candidate(s)\n",
+            style="yellow",
+        )
 
     overall_pct = int(snapshot.overall_score * 100)
     text.append(f"\n  Overall: {overall_pct}%", style="bold")
@@ -2216,11 +2289,12 @@ In `__init__`, add:
 Add a new method to SidebarStatus:
 
 ```python
-    def update_domain_health(self, snapshot) -> None:
-        """Update domain health section."""
-        self._domain_health = snapshot
-        from cockpit.widgets.domain_health import render_domain_health
-        self.query_one("#sb-domain-health").update(render_domain_health(snapshot))
+def update_domain_health(self, snapshot) -> None:
+    """Update domain health section."""
+    self._domain_health = snapshot
+    from cockpit.widgets.domain_health import render_domain_health
+
+    self.query_one("#sb-domain-health").update(render_domain_health(snapshot))
 ```
 
 **Step 2: Call domain health collector in refresh_slow**
@@ -2278,9 +2352,11 @@ class TestEmergenceNudges:
     def test_emergence_candidates_produce_nudges(self) -> None:
         """Active emergence candidates generate nudges."""
         from cockpit.data.nudges import Nudge
+
         nudges: list[Nudge] = []
         # We can't easily mock this, but we can verify the collector exists
         from cockpit.data.nudges import _collect_emergence_nudges
+
         _collect_emergence_nudges(nudges)
         # Should not crash — may produce 0 nudges if no candidates
         assert isinstance(nudges, list)
@@ -2295,21 +2371,24 @@ def _collect_emergence_nudges(nudges: list[Nudge]) -> None:
     """Generate nudges from emergence detection candidates."""
     try:
         from cockpit.data.emergence import collect_emergence
+
         snapshot = collect_emergence()
         for candidate in snapshot.candidates:
-            nudges.append(Nudge(
-                category="emergence",
-                priority_score=55,
-                priority_label="medium",
-                title=f"Potential new domain: {candidate.label}",
-                detail=(
-                    f"{candidate.event_count} activities over {candidate.week_span} weeks. "
-                    f"Keywords: {', '.join(candidate.top_keywords[:3])}"
-                ),
-                suggested_action=f"/domain propose {candidate.candidate_id}",
-                command_hint="",
-                source_id=f"emergence:{candidate.candidate_id}",
-            ))
+            nudges.append(
+                Nudge(
+                    category="emergence",
+                    priority_score=55,
+                    priority_label="medium",
+                    title=f"Potential new domain: {candidate.label}",
+                    detail=(
+                        f"{candidate.event_count} activities over {candidate.week_span} weeks. "
+                        f"Keywords: {', '.join(candidate.top_keywords[:3])}"
+                    ),
+                    suggested_action=f"/domain propose {candidate.candidate_id}",
+                    command_hint="",
+                    source_id=f"emergence:{candidate.candidate_id}",
+                )
+            )
     except Exception:
         pass
 ```

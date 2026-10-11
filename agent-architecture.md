@@ -269,12 +269,12 @@ LANGFUSE_HOST = "http://localhost:3100"
 
 # Standard model aliases — agents reference these, not raw model IDs
 MODELS = {
-    "fast": "claude-haiku",        # cheap, quick tasks
-    "balanced": "claude-sonnet",   # default for most agents
-    "reasoning": "deepseek-r1:14b",# complex reasoning via Ollama
-    "coding": "qwen-coder-32b",   # code generation via Ollama
-    "embedding": "nomic-embed",    # vector embeddings
-    "local-fast": "qwen-7b",      # offline/privacy tasks
+    "fast": "claude-haiku",  # cheap, quick tasks
+    "balanced": "claude-sonnet",  # default for most agents
+    "reasoning": "deepseek-r1:14b",  # complex reasoning via Ollama
+    "coding": "qwen-coder-32b",  # code generation via Ollama
+    "embedding": "nomic-embed",  # vector embeddings
+    "local-fast": "qwen-7b",  # offline/privacy tasks
 }
 ```
 

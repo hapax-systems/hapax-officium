@@ -45,6 +45,7 @@ Add to `tests/test_engine_models.py` (create if needed — check first):
 
 ```python
 """Tests for logos/engine/models.py."""
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -136,6 +137,7 @@ The main implementation. TDD: write tests first, then implement to make them pas
 
 ```python
 """Tests for logos/engine/synthesis.py — SynthesisScheduler."""
+
 from __future__ import annotations
 
 import asyncio
@@ -181,7 +183,14 @@ class TestSignal:
     def test_irrelevant_subdirectory(self):
         """decisions/, status-reports/, references/, 1on1-prep/ don't affect dirty set."""
         scheduler, _ = _make_scheduler()
-        for subdir in ("decisions", "status-reports", "references", "1on1-prep", "inbox", "processed"):
+        for subdir in (
+            "decisions",
+            "status-reports",
+            "references",
+            "1on1-prep",
+            "inbox",
+            "processed",
+        ):
             scheduler.signal(subdir)
         assert len(scheduler._dirty) == 0
         assert scheduler._profiler_dirty is False
@@ -223,10 +232,18 @@ class TestQuietWindow:
         """Handlers called after timer expires."""
         scheduler, executor = _make_scheduler(quiet_window_s=0.05)
 
-        with patch("cockpit.engine.synthesis._synthesize_briefing", new_callable=AsyncMock) as mock_brief, \
-             patch("cockpit.engine.synthesis._synthesize_snapshot", new_callable=AsyncMock) as mock_snap, \
-             patch("cockpit.engine.synthesis._synthesize_overview", new_callable=AsyncMock) as mock_over, \
-             patch("cockpit.engine.synthesis.cache") as mock_cache:
+        with (
+            patch(
+                "cockpit.engine.synthesis._synthesize_briefing", new_callable=AsyncMock
+            ) as mock_brief,
+            patch(
+                "cockpit.engine.synthesis._synthesize_snapshot", new_callable=AsyncMock
+            ) as mock_snap,
+            patch(
+                "cockpit.engine.synthesis._synthesize_overview", new_callable=AsyncMock
+            ) as mock_over,
+            patch("cockpit.engine.synthesis.cache") as mock_cache,
+        ):
             mock_cache.refresh = AsyncMock()
 
             scheduler.signal("people")
@@ -245,9 +262,7 @@ class TestQuietWindow:
 class TestSuppression:
     async def test_suppressed_when_agent_running(self):
         """Reschedules 60s when manual agent active."""
-        scheduler, executor = _make_scheduler(
-            agent_running=True, quiet_window_s=0.05
-        )
+        scheduler, executor = _make_scheduler(agent_running=True, quiet_window_s=0.05)
 
         scheduler.signal("people")
         await asyncio.sleep(0.2)
@@ -324,6 +339,7 @@ Expected: FAIL — `cockpit.engine.synthesis` doesn't exist yet.
 Accumulates filesystem change signals, waits for a quiet window,
 then submits synthesis ActionPlans to the executor.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -343,8 +359,9 @@ _log = logging.getLogger(__name__)
 # ── Path classification ──────────────────────────────────────────────
 
 HOT_PATH = frozenset({"people", "coaching", "feedback"})
-WARM_PATH = frozenset({"meetings", "okrs", "goals", "incidents",
-                        "postmortem-actions", "review-cycles"})
+WARM_PATH = frozenset(
+    {"meetings", "okrs", "goals", "incidents", "postmortem-actions", "review-cycles"}
+)
 SYNTHESIS_RELEVANT = HOT_PATH | WARM_PATH
 
 # Reschedule delay when suppressed (seconds)
@@ -352,6 +369,7 @@ _SUPPRESSION_DELAY = 60.0
 
 
 # ── Synthesis handlers ───────────────────────────────────────────────
+
 
 async def _synthesize_briefing() -> str:
     from agents.management_briefing import generate_briefing, format_briefing_md
@@ -361,9 +379,7 @@ async def _synthesize_briefing() -> str:
     briefing = await generate_briefing()
     md = format_briefing_md(briefing)
     write_briefing_to_vault(md)
-    (PROFILES_DIR / "management-briefing.json").write_text(
-        briefing.model_dump_json(indent=2)
-    )
+    (PROFILES_DIR / "management-briefing.json").write_text(briefing.model_dump_json(indent=2))
     return f"briefing: {briefing.headline}"
 
 
@@ -387,8 +403,11 @@ async def _synthesize_overview() -> str:
 
 async def _synthesize_profile_light() -> str:
     from agents.management_profiler import (
-        generate_and_load_management_facts, synthesize_profile,
-        build_profile, save_profile, load_profile,
+        generate_and_load_management_facts,
+        synthesize_profile,
+        build_profile,
+        save_profile,
+        load_profile,
     )
 
     facts = generate_and_load_management_facts()
@@ -400,6 +419,7 @@ async def _synthesize_profile_light() -> str:
 
 
 # ── Scheduler ────────────────────────────────────────────────────────
+
 
 class SynthesisScheduler:
     """Accumulate change signals, wait for quiet, trigger LLM synthesis."""
@@ -420,17 +440,15 @@ class SynthesisScheduler:
         self._ignore_fn = ignore_fn
 
         if quiet_window_s is None:
-            quiet_window_s = float(
-                os.environ.get("ENGINE_SYNTHESIS_QUIET_S", "180")
-            )
+            quiet_window_s = float(os.environ.get("ENGINE_SYNTHESIS_QUIET_S", "180"))
         if profiler_interval_s is None:
-            profiler_interval_s = float(
-                os.environ.get("ENGINE_PROFILER_INTERVAL_S", "86400")
-            )
+            profiler_interval_s = float(os.environ.get("ENGINE_PROFILER_INTERVAL_S", "86400"))
         if enabled is None:
-            enabled = os.environ.get(
-                "ENGINE_SYNTHESIS_ENABLED", "true"
-            ).lower() in ("true", "1", "yes")
+            enabled = os.environ.get("ENGINE_SYNTHESIS_ENABLED", "true").lower() in (
+                "true",
+                "1",
+                "yes",
+            )
 
         self._quiet_window_s = quiet_window_s
         self._profiler_interval_s = profiler_interval_s
@@ -485,9 +503,7 @@ class SynthesisScheduler:
         if self._timer is not None:
             self._timer.cancel()
         loop = asyncio.get_running_loop()
-        self._timer = loop.call_later(
-            self._quiet_window_s, self._schedule_synthesis
-        )
+        self._timer = loop.call_later(self._quiet_window_s, self._schedule_synthesis)
 
     async def force(self) -> None:
         """Force immediate synthesis, bypassing quiet window."""
@@ -504,16 +520,12 @@ class SynthesisScheduler:
             "quiet_window_s": self._quiet_window_s,
             "timer_active": self._timer is not None,
             "last_synthesis_at": (
-                datetime.fromtimestamp(
-                    self._last_synthesis_at, tz=timezone.utc
-                ).isoformat()
+                datetime.fromtimestamp(self._last_synthesis_at, tz=timezone.utc).isoformat()
                 if self._last_synthesis_at > 0
                 else None
             ),
             "last_profiler_at": (
-                datetime.fromtimestamp(
-                    self._last_profiler_at, tz=timezone.utc
-                ).isoformat()
+                datetime.fromtimestamp(self._last_profiler_at, tz=timezone.utc).isoformat()
                 if self._last_profiler_at > 0
                 else None
             ),
@@ -592,27 +604,32 @@ class SynthesisScheduler:
         # Enqueue delivery items
         now = datetime.now(timezone.utc)
         for name, result in plan.results.items():
-            self._delivery.enqueue(DeliveryItem(
-                title=name,
-                detail=str(result),
-                priority="medium",
-                category="generated",
-                source_action=name,
-                timestamp=now,
-            ))
+            self._delivery.enqueue(
+                DeliveryItem(
+                    title=name,
+                    detail=str(result),
+                    priority="medium",
+                    category="generated",
+                    source_action=name,
+                    timestamp=now,
+                )
+            )
         for name, error in plan.errors.items():
-            self._delivery.enqueue(DeliveryItem(
-                title=f"{name} failed",
-                detail=error,
-                priority="high",
-                category="error",
-                source_action=name,
-                timestamp=now,
-            ))
+            self._delivery.enqueue(
+                DeliveryItem(
+                    title=f"{name} failed",
+                    detail=error,
+                    priority="high",
+                    category="error",
+                    source_action=name,
+                    timestamp=now,
+                )
+            )
 
         # Refresh cache so API serves fresh artifacts
         try:
             from cockpit.api.cache import cache
+
             await cache.refresh()
         except Exception:
             _log.exception("Post-synthesis cache refresh failed")
@@ -674,14 +691,16 @@ class SynthesisScheduler:
 
             now = datetime.now(timezone.utc)
             for name, result in plan.results.items():
-                self._delivery.enqueue(DeliveryItem(
-                    title=name,
-                    detail=str(result),
-                    priority="medium",
-                    category="generated",
-                    source_action=name,
-                    timestamp=now,
-                ))
+                self._delivery.enqueue(
+                    DeliveryItem(
+                        title=name,
+                        detail=str(result),
+                        priority="medium",
+                        category="generated",
+                        source_action=name,
+                        timestamp=now,
+                    )
+                )
         except Exception:
             _log.exception("Profiler synthesis failed")
         finally:
@@ -943,25 +962,28 @@ After `_refreshed_at: float = 0.0` (line 33), add:
 After `cache_age()` method, add:
 
 ```python
-    def record_hot_change(self) -> None:
-        """Record that a hot-path data change occurred now."""
-        self._last_hot_change_at = time.monotonic()
+def record_hot_change(self) -> None:
+    """Record that a hot-path data change occurred now."""
+    self._last_hot_change_at = time.monotonic()
 
-    def record_warm_change(self) -> None:
-        """Record that a warm-path data change occurred now."""
-        self._last_warm_change_at = time.monotonic()
 
-    def hot_change_age(self) -> int:
-        """Seconds since last hot-path change, or -1 if none."""
-        if self._last_hot_change_at == 0.0:
-            return -1
-        return int(time.monotonic() - self._last_hot_change_at)
+def record_warm_change(self) -> None:
+    """Record that a warm-path data change occurred now."""
+    self._last_warm_change_at = time.monotonic()
 
-    def warm_change_age(self) -> int:
-        """Seconds since last warm-path change, or -1 if none."""
-        if self._last_warm_change_at == 0.0:
-            return -1
-        return int(time.monotonic() - self._last_warm_change_at)
+
+def hot_change_age(self) -> int:
+    """Seconds since last hot-path change, or -1 if none."""
+    if self._last_hot_change_at == 0.0:
+        return -1
+    return int(time.monotonic() - self._last_hot_change_at)
+
+
+def warm_change_age(self) -> int:
+    """Seconds since last warm-path change, or -1 if none."""
+    if self._last_warm_change_at == 0.0:
+        return -1
+    return int(time.monotonic() - self._last_warm_change_at)
 ```
 
 - [ ] **Step 6: Set timestamps from engine _handle_change**

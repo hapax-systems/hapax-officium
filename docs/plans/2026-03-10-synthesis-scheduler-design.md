@@ -153,8 +153,7 @@ class SynthesisScheduler:
 
 ```python
 HOT_PATH = {"people", "coaching", "feedback"}
-WARM_PATH = {"meetings", "okrs", "goals", "incidents",
-             "postmortem-actions", "review-cycles"}
+WARM_PATH = {"meetings", "okrs", "goals", "incidents", "postmortem-actions", "review-cycles"}
 SYNTHESIS_RELEVANT = HOT_PATH | WARM_PATH
 ```
 
@@ -226,10 +225,9 @@ async def _synthesize_briefing() -> str:
     briefing = await generate_briefing()
     md = format_briefing_md(briefing)
     write_briefing_to_vault(md)
-    (PROFILES_DIR / "management-briefing.json").write_text(
-        briefing.model_dump_json(indent=2)
-    )
+    (PROFILES_DIR / "management-briefing.json").write_text(briefing.model_dump_json(indent=2))
     return f"briefing: {briefing.headline}"
+
 
 async def _synthesize_snapshot() -> str:
     from agents.management_prep import generate_team_snapshot, format_snapshot_md
@@ -238,6 +236,7 @@ async def _synthesize_snapshot() -> str:
     snapshot = await generate_team_snapshot()
     write_team_snapshot_to_vault(format_snapshot_md(snapshot))
     return f"snapshot: {snapshot.headline}"
+
 
 async def _synthesize_overview() -> str:
     from agents.management_prep import generate_overview, format_overview_md
@@ -253,8 +252,11 @@ One daily handler:
 ```python
 async def _synthesize_profile_light() -> str:
     from agents.management_profiler import (
-        generate_and_load_management_facts, synthesize_profile,
-        build_profile, save_profile, load_profile,
+        generate_and_load_management_facts,
+        synthesize_profile,
+        build_profile,
+        save_profile,
+        load_profile,
     )
 
     facts = generate_and_load_management_facts()

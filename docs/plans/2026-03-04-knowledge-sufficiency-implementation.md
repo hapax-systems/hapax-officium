@@ -627,6 +627,7 @@ Create `tests/test_knowledge_sufficiency.py`:
 
 ```python
 """Tests for knowledge sufficiency audit check functions."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -646,6 +647,7 @@ from cockpit.data.knowledge_sufficiency import (
 
 
 # ── file_exists ─────────────────────────────────────────────────
+
 
 class TestCheckFileExists:
     def test_file_exists_with_content(self, tmp_path: Path) -> None:
@@ -672,8 +674,11 @@ class TestCheckFileExists:
 
 # ── min_count ────────────────────────────────────────────────────
 
+
 class TestCheckMinCount:
-    def _make_person(self, folder: Path, name: str, team: str = "alpha", status: str = "active") -> None:
+    def _make_person(
+        self, folder: Path, name: str, team: str = "alpha", status: str = "active"
+    ) -> None:
         f = folder / f"{name}.md"
         f.write_text(f"---\ntype: person\nstatus: {status}\nteam: {team}\n---\n# {name}\n")
 
@@ -682,45 +687,62 @@ class TestCheckMinCount:
         people.mkdir(parents=True)
         self._make_person(people, "alice")
         self._make_person(people, "bob")
-        assert check_min_count(
-            tmp_path, "10-work/people",
-            filter_fields={"type": "person", "status": "active"},
-            min_count=1,
-        ) is True
+        assert (
+            check_min_count(
+                tmp_path,
+                "10-work/people",
+                filter_fields={"type": "person", "status": "active"},
+                min_count=1,
+            )
+            is True
+        )
 
     def test_min_count_not_met(self, tmp_path: Path) -> None:
         people = tmp_path / "10-work" / "people"
         people.mkdir(parents=True)
-        assert check_min_count(
-            tmp_path, "10-work/people",
-            filter_fields={"type": "person", "status": "active"},
-            min_count=1,
-        ) is False
+        assert (
+            check_min_count(
+                tmp_path,
+                "10-work/people",
+                filter_fields={"type": "person", "status": "active"},
+                min_count=1,
+            )
+            is False
+        )
 
     def test_min_count_filters(self, tmp_path: Path) -> None:
         people = tmp_path / "10-work" / "people"
         people.mkdir(parents=True)
         self._make_person(people, "alice", status="active")
         self._make_person(people, "charlie", status="departed")
-        assert check_min_count(
-            tmp_path, "10-work/people",
-            filter_fields={"type": "person", "status": "active"},
-            min_count=2,
-        ) is False
+        assert (
+            check_min_count(
+                tmp_path,
+                "10-work/people",
+                filter_fields={"type": "person", "status": "active"},
+                min_count=2,
+            )
+            is False
+        )
 
     def test_min_count_no_filter(self, tmp_path: Path) -> None:
         people = tmp_path / "10-work" / "people"
         people.mkdir(parents=True)
         self._make_person(people, "alice")
         self._make_person(people, "bob")
-        assert check_min_count(
-            tmp_path, "10-work/people",
-            filter_fields={},
-            min_count=2,
-        ) is True
+        assert (
+            check_min_count(
+                tmp_path,
+                "10-work/people",
+                filter_fields={},
+                min_count=2,
+            )
+            is True
+        )
 
 
 # ── field_populated ──────────────────────────────────────────────
+
 
 class TestCheckFieldPopulated:
     def _make_person(self, folder: Path, name: str, **extra_fields: str) -> None:
@@ -735,45 +757,62 @@ class TestCheckFieldPopulated:
         people.mkdir(parents=True)
         self._make_person(people, "alice", team="alpha")
         self._make_person(people, "bob", team="beta")
-        assert check_field_populated(
-            tmp_path, "10-work/people",
-            filter_fields={"type": "person", "status": "active"},
-            field="team",
-        ) is True
+        assert (
+            check_field_populated(
+                tmp_path,
+                "10-work/people",
+                filter_fields={"type": "person", "status": "active"},
+                field="team",
+            )
+            is True
+        )
 
     def test_some_missing(self, tmp_path: Path) -> None:
         people = tmp_path / "10-work" / "people"
         people.mkdir(parents=True)
         self._make_person(people, "alice", team="alpha")
         self._make_person(people, "bob")  # no team
-        assert check_field_populated(
-            tmp_path, "10-work/people",
-            filter_fields={"type": "person", "status": "active"},
-            field="team",
-        ) is False
+        assert (
+            check_field_populated(
+                tmp_path,
+                "10-work/people",
+                filter_fields={"type": "person", "status": "active"},
+                field="team",
+            )
+            is False
+        )
 
     def test_empty_string_counts_as_missing(self, tmp_path: Path) -> None:
         people = tmp_path / "10-work" / "people"
         people.mkdir(parents=True)
         self._make_person(people, "alice", team="")
-        assert check_field_populated(
-            tmp_path, "10-work/people",
-            filter_fields={"type": "person", "status": "active"},
-            field="team",
-        ) is False
+        assert (
+            check_field_populated(
+                tmp_path,
+                "10-work/people",
+                filter_fields={"type": "person", "status": "active"},
+                field="team",
+            )
+            is False
+        )
 
     def test_no_matching_notes(self, tmp_path: Path) -> None:
         """No matching notes = vacuously true (nothing to check)."""
         people = tmp_path / "10-work" / "people"
         people.mkdir(parents=True)
-        assert check_field_populated(
-            tmp_path, "10-work/people",
-            filter_fields={"type": "person", "status": "active"},
-            field="team",
-        ) is True
+        assert (
+            check_field_populated(
+                tmp_path,
+                "10-work/people",
+                filter_fields={"type": "person", "status": "active"},
+                field="team",
+            )
+            is True
+        )
 
 
 # ── field_coverage ───────────────────────────────────────────────
+
 
 class TestCheckFieldCoverage:
     def _make_person(self, folder: Path, name: str, **extra_fields: str) -> None:
@@ -790,12 +829,16 @@ class TestCheckFieldCoverage:
         self._make_person(people, "bob", **{"career-goal-3y": "IC track"})
         self._make_person(people, "charlie")  # missing
         # 2/3 = 66.7% >= 50%
-        assert check_field_coverage(
-            tmp_path, "10-work/people",
-            filter_fields={"type": "person", "status": "active"},
-            field="career-goal-3y",
-            threshold=50,
-        ) is True
+        assert (
+            check_field_coverage(
+                tmp_path,
+                "10-work/people",
+                filter_fields={"type": "person", "status": "active"},
+                field="career-goal-3y",
+                threshold=50,
+            )
+            is True
+        )
 
     def test_below_threshold(self, tmp_path: Path) -> None:
         people = tmp_path / "10-work" / "people"
@@ -805,25 +848,34 @@ class TestCheckFieldCoverage:
         self._make_person(people, "charlie")
         self._make_person(people, "dave")
         # 1/4 = 25% < 50%
-        assert check_field_coverage(
-            tmp_path, "10-work/people",
-            filter_fields={"type": "person", "status": "active"},
-            field="career-goal-3y",
-            threshold=50,
-        ) is False
+        assert (
+            check_field_coverage(
+                tmp_path,
+                "10-work/people",
+                filter_fields={"type": "person", "status": "active"},
+                field="career-goal-3y",
+                threshold=50,
+            )
+            is False
+        )
 
     def test_no_matching_notes(self, tmp_path: Path) -> None:
         people = tmp_path / "10-work" / "people"
         people.mkdir(parents=True)
-        assert check_field_coverage(
-            tmp_path, "10-work/people",
-            filter_fields={"type": "person", "status": "active"},
-            field="career-goal-3y",
-            threshold=50,
-        ) is False  # 0 notes = no data = not satisfied
+        assert (
+            check_field_coverage(
+                tmp_path,
+                "10-work/people",
+                filter_fields={"type": "person", "status": "active"},
+                field="career-goal-3y",
+                threshold=50,
+            )
+            is False
+        )  # 0 notes = no data = not satisfied
 
 
 # ── any_content ──────────────────────────────────────────────────
+
 
 class TestCheckAnyContent:
     def test_substantive(self, tmp_path: Path) -> None:
@@ -861,6 +913,7 @@ a prioritized gap list. Integrates with the nudge system via collect_knowledge_g
 
 Design doc: docs/plans/2026-03-04-knowledge-sufficiency-design.md
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -874,14 +927,16 @@ from shared.vault_utils import parse_frontmatter
 
 # ── Data classes ─────────────────────────────────────────────────
 
+
 @dataclass
 class KnowledgeGap:
     """A single unsatisfied knowledge requirement."""
+
     requirement_id: str
-    category: str           # foundational | structural | enrichment
-    priority: int           # 90, 60, or 35
+    category: str  # foundational | structural | enrichment
+    priority: int  # 90, 60, or 35
     description: str
-    acquisition_method: str # interview | nudge | external
+    acquisition_method: str  # interview | nudge | external
     interview_question: str | None
     depends_on: list[str]
     satisfied: bool
@@ -890,6 +945,7 @@ class KnowledgeGap:
 @dataclass
 class SufficiencyReport:
     """Result of a full knowledge audit."""
+
     gaps: list[KnowledgeGap]
     total_requirements: int
     satisfied_count: int
@@ -900,7 +956,9 @@ class SufficiencyReport:
 
 # ── Constants ────────────────────────────────────────────────────
 
-KNOWLEDGE_MODEL_PATH = Path.home() / "projects" / "hapaxromana" / "knowledge" / "management-sufficiency.yaml"
+KNOWLEDGE_MODEL_PATH = (
+    Path.home() / "projects" / "hapaxromana" / "knowledge" / "management-sufficiency.yaml"
+)
 
 PRIORITY_MAP = {
     "foundational": 90,
@@ -912,6 +970,7 @@ MIN_BODY_LENGTH = 50  # characters of body content to count as substantive
 
 
 # ── Check functions ──────────────────────────────────────────────
+
 
 def _get_matching_notes(
     vault_path: Path,
@@ -948,7 +1007,7 @@ def _get_body(path: Path) -> str:
     if text.startswith("---"):
         end = text.find("---", 3)
         if end != -1:
-            return text[end + 3:].strip()
+            return text[end + 3 :].strip()
     return text.strip()
 
 
@@ -1006,8 +1065,7 @@ def check_field_coverage(
         return False  # no data = not satisfied
 
     populated = sum(
-        1 for _, fm in matches
-        if fm.get(field) is not None and str(fm.get(field)).strip() != ""
+        1 for _, fm in matches if fm.get(field) is not None and str(fm.get(field)).strip() != ""
     )
     coverage = (populated / len(matches)) * 100
     return coverage >= threshold
@@ -1137,7 +1195,9 @@ class TestRunAudit:
         # Satisfy min_count
         people = tmp_path / "10-work" / "people"
         people.mkdir(parents=True)
-        (people / "alice.md").write_text("---\ntype: person\nstatus: active\nteam: alpha\n---\n# Alice\n")
+        (people / "alice.md").write_text(
+            "---\ntype: person\nstatus: active\nteam: alpha\n---\n# Alice\n"
+        )
 
         report = run_audit(self.MINIMAL_MODEL, vault_path=tmp_path)
         assert report.satisfied_count == 2
@@ -1181,7 +1241,12 @@ class TestRunAudit:
                     "description": "Derived check",
                     "source": "test",
                     "check": {"type": "derived", "logic": "custom logic"},
-                    "acquisition": {"method": "nudge", "question": None, "extraction_schema": None, "output": None},
+                    "acquisition": {
+                        "method": "nudge",
+                        "question": None,
+                        "extraction_schema": None,
+                        "output": None,
+                    },
                     "priority": 60,
                     "depends_on": [],
                 },
@@ -1198,8 +1263,10 @@ class TestCollectKnowledgeGaps:
     def test_returns_report(self, tmp_path: Path) -> None:
         from cockpit.data.knowledge_sufficiency import collect_knowledge_gaps
 
-        with patch("cockpit.data.knowledge_sufficiency.VAULT_PATH", tmp_path), \
-             patch("cockpit.data.knowledge_sufficiency.KNOWLEDGE_MODEL_PATH") as mock_path:
+        with (
+            patch("cockpit.data.knowledge_sufficiency.VAULT_PATH", tmp_path),
+            patch("cockpit.data.knowledge_sufficiency.KNOWLEDGE_MODEL_PATH") as mock_path,
+        ):
             # Use a minimal model
             model_file = tmp_path / "model.yaml"
             model_file.write_text(yaml.dump(TestRunAudit.MINIMAL_MODEL))
@@ -1242,6 +1309,7 @@ Add at the bottom of the file:
 ```python
 # ── Model loading ────────────────────────────────────────────────
 
+
 def load_knowledge_model(path: Path | None = None) -> dict:
     """Load the YAML knowledge model from disk."""
     target = path or KNOWLEDGE_MODEL_PATH
@@ -1250,6 +1318,7 @@ def load_knowledge_model(path: Path | None = None) -> dict:
 
 
 # ── Audit orchestrator ───────────────────────────────────────────
+
 
 def _run_check(vault_path: Path, check: dict) -> bool:
     """Dispatch a single check against the vault."""
@@ -1309,16 +1378,20 @@ def run_audit(
         satisfied = _run_check(vp, check)
         acq = req.get("acquisition", {})
 
-        gaps.append(KnowledgeGap(
-            requirement_id=req["id"],
-            category=req.get("category", "enrichment"),
-            priority=req.get("priority", PRIORITY_MAP.get(req.get("category", "enrichment"), 35)),
-            description=req.get("description", ""),
-            acquisition_method=acq.get("method", "nudge"),
-            interview_question=acq.get("question"),
-            depends_on=req.get("depends_on", []),
-            satisfied=satisfied,
-        ))
+        gaps.append(
+            KnowledgeGap(
+                requirement_id=req["id"],
+                category=req.get("category", "enrichment"),
+                priority=req.get(
+                    "priority", PRIORITY_MAP.get(req.get("category", "enrichment"), 35)
+                ),
+                description=req.get("description", ""),
+                acquisition_method=acq.get("method", "nudge"),
+                interview_question=acq.get("question"),
+                depends_on=req.get("depends_on", []),
+                satisfied=satisfied,
+            )
+        )
 
     total = len(gaps)
     satisfied_count = sum(1 for g in gaps if g.satisfied)
@@ -1509,6 +1582,7 @@ Append to the file:
 ```python
 # ── Nudge generation ─────────────────────────────────────────────
 
+
 def gaps_to_nudges(gaps: list[KnowledgeGap]) -> list["Nudge"]:
     """Convert unsatisfied knowledge gaps to nudges.
 
@@ -1529,8 +1603,10 @@ def gaps_to_nudges(gaps: list[KnowledgeGap]) -> list["Nudge"]:
             continue
 
         label = (
-            "high" if gap.category == "foundational"
-            else "medium" if gap.category == "structural"
+            "high"
+            if gap.category == "foundational"
+            else "medium"
+            if gap.category == "structural"
             else "low"
         )
 
@@ -1541,16 +1617,18 @@ def gaps_to_nudges(gaps: list[KnowledgeGap]) -> list["Nudge"]:
             action = f"Create: {gap.description.strip()}"
             hint = ""
 
-        nudges.append(Nudge(
-            category="knowledge",
-            priority_score=gap.priority,
-            priority_label=label,
-            title=f"Missing: {gap.description.strip()[:80]}",
-            detail=gap.description.strip(),
-            suggested_action=action,
-            command_hint=hint,
-            source_id=f"knowledge:{gap.requirement_id}",
-        ))
+        nudges.append(
+            Nudge(
+                category="knowledge",
+                priority_score=gap.priority,
+                priority_label=label,
+                title=f"Missing: {gap.description.strip()[:80]}",
+                detail=gap.description.strip(),
+                suggested_action=action,
+                command_hint=hint,
+                source_id=f"knowledge:{gap.requirement_id}",
+            )
+        )
 
     return nudges
 ```
@@ -1564,6 +1642,7 @@ def _collect_knowledge_sufficiency_nudges(nudges: list[Nudge]) -> None:
     """Generate nudges from knowledge sufficiency gaps."""
     try:
         from cockpit.data.knowledge_sufficiency import collect_knowledge_gaps, gaps_to_nudges
+
         report = collect_knowledge_gaps()
         nudges.extend(gaps_to_nudges(report.gaps))
     except Exception:
@@ -1579,7 +1658,7 @@ In `collect_nudges()`, add the call after `_collect_sufficiency_nudges(nudges)` 
 Update the Nudge docstring category list (line 29) to include `"knowledge"`:
 
 ```python
-    category: str        # "health" | "briefing" | "readiness" | "profile" | "scout" | "drift" | "action" | "knowledge"
+category: str  # "health" | "briefing" | "readiness" | "profile" | "scout" | "drift" | "action" | "knowledge"
 ```
 
 **Step 5: Run tests to verify they pass**

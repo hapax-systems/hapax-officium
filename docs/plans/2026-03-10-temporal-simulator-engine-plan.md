@@ -51,6 +51,7 @@ Run: `mkdir -p agents/simulator_pipeline`
 ```python
 # tests/test_simulator_models.py
 """Tests for simulator pipeline models."""
+
 from __future__ import annotations
 
 from datetime import date
@@ -188,6 +189,7 @@ Safety enforcement: coaching and feedback events use restricted content
 policy — no free-text body, no evaluative language. Content is rendered
 from structural fields (date, participant, topics, action items) only.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -222,6 +224,7 @@ class SimulatedEvent(BaseModel):
     For restricted types (coaching, feedback), body_template must be None.
     Content is generated from structural fields via templates.
     """
+
     date: str = Field(description="ISO date of the event (YYYY-MM-DD)")
     workflow_type: str = Field(description="Key into workflow-semantics.yaml")
     subdirectory: str = Field(description="Target subdirectory in DATA_DIR")
@@ -237,6 +240,7 @@ class SimulatedEvent(BaseModel):
 
 class TickResult(BaseModel):
     """Result of processing a single simulation tick (one workday)."""
+
     date: str = Field(description="ISO date of this tick")
     events: list[SimulatedEvent] = Field(default_factory=list)
     checkpoint_ran: bool = Field(default=False)
@@ -273,6 +277,7 @@ The renderer converts SimulatedEvent objects into markdown files with YAML front
 ```python
 # tests/test_simulator_renderer.py
 """Tests for simulator event renderer."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -420,6 +425,7 @@ Expected: FAIL
 Coaching and feedback events use structural templates (date, participant,
 topics, action items) — never evaluative or prescriptive language.
 """
+
 from __future__ import annotations
 
 import logging
@@ -525,6 +531,7 @@ Loads workflow semantics, role matrix, and scenarios from YAML files and compose
 ```python
 # tests/test_simulator_context.py
 """Tests for simulator context assembly."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -658,6 +665,7 @@ Expected: FAIL
 Loads workflow semantics, role matrix, and scenarios; composes them into
 a role profile and builds per-tick prompts for LLM event generation.
 """
+
 from __future__ import annotations
 
 import logging
@@ -707,10 +715,12 @@ def compose_role_profile(
     workflow_details = []
     for wf_name in role["workflows"]:
         if wf_name in workflows:
-            workflow_details.append({
-                "name": wf_name,
-                **workflows[wf_name],
-            })
+            workflow_details.append(
+                {
+                    "name": wf_name,
+                    **workflows[wf_name],
+                }
+            )
 
     profile: dict[str, Any] = {
         "role": role_name,
@@ -764,26 +774,30 @@ def build_tick_prompt(
         scenario_mod = profile["scenario_overrides"].get(wf["name"], 1.0)
         effective = modifier * scenario_mod
         cadence = wf.get("cadence", "event-driven")
-        lines.append(f"  - {wf['name']}: {wf.get('description', '')} "
-                      f"(cadence: {cadence}, weight: {effective:.1f}x)")
+        lines.append(
+            f"  - {wf['name']}: {wf.get('description', '')} "
+            f"(cadence: {cadence}, weight: {effective:.1f}x)"
+        )
     lines.append("")
 
     if profile.get("scenario_description"):
         lines.append(f"Scenario context: {profile['scenario_description']}")
         lines.append("")
 
-    lines.extend([
-        "Generate 0-3 plausible events for today. Consider:",
-        "- What would this role naturally do on this day?",
-        "- Respect cadences (don't do daily what should be weekly)",
-        "- Some days have no events — that's normal",
-        "- Incidents and decisions are stochastic (rare, random)",
-        "- Follow trigger chains (incident -> postmortem_action)",
-        "",
-        "SAFETY: Never generate evaluative language about team members.",
-        "Coaching and feedback events must contain ONLY structural content:",
-        "date, participant, topics discussed, and action items.",
-    ])
+    lines.extend(
+        [
+            "Generate 0-3 plausible events for today. Consider:",
+            "- What would this role naturally do on this day?",
+            "- Respect cadences (don't do daily what should be weekly)",
+            "- Some days have no events — that's normal",
+            "- Incidents and decisions are stochastic (rare, random)",
+            "- Follow trigger chains (incident -> postmortem_action)",
+            "",
+            "SAFETY: Never generate evaluative language about team members.",
+            "Coaching and feedback events must contain ONLY structural content:",
+            "date, participant, topics discussed, and action items.",
+        ]
+    )
 
     return "\n".join(lines)
 ```
@@ -817,6 +831,7 @@ Rebases dates in seed corpus files relative to the simulation start_date.
 ```python
 # tests/test_simulator_seed.py
 """Tests for seed date rebasing."""
+
 from __future__ import annotations
 
 from datetime import date
@@ -842,9 +857,7 @@ class TestFindLatestDate:
     def test_returns_none_for_no_dates(self, tmp_path: Path):
         """Returns None if no date fields found."""
         (tmp_path / "people").mkdir()
-        (tmp_path / "people" / "alice.md").write_text(
-            "---\ntype: person\nname: Alice\n---\n"
-        )
+        (tmp_path / "people" / "alice.md").write_text("---\ntype: person\nname: Alice\n---\n")
         result = find_latest_date(tmp_path)
         assert result is None
 
@@ -876,9 +889,7 @@ class TestRebaseSeedDates:
     def test_noop_when_no_dates(self, tmp_path: Path):
         """No-op if seed has no date fields."""
         (tmp_path / "people").mkdir()
-        (tmp_path / "people" / "alice.md").write_text(
-            "---\ntype: person\nname: Alice\n---\n"
-        )
+        (tmp_path / "people" / "alice.md").write_text("---\ntype: person\nname: Alice\n---\n")
         rebase_seed_dates(tmp_path, sim_start=date(2026, 1, 1))
         content = (tmp_path / "people" / "alice.md").read_text()
         assert "name: Alice" in content
@@ -906,6 +917,7 @@ Scans seed corpus files for ISO date strings in frontmatter and shifts
 them by a calculated offset so the seed represents 'existing history'
 at the simulation start_date.
 """
+
 from __future__ import annotations
 
 import logging
@@ -958,8 +970,9 @@ def rebase_seed_dates(data_dir: Path, sim_start: date) -> None:
         _log.info("Seed dates already aligned with sim_start")
         return
 
-    _log.info("Rebasing seed dates by %d days (latest=%s, sim_start=%s)",
-              offset.days, latest, sim_start)
+    _log.info(
+        "Rebasing seed dates by %d days (latest=%s, sim_start=%s)", offset.days, latest, sim_start
+    )
 
     for md_file in data_dir.rglob("*.md"):
         content = md_file.read_text(encoding="utf-8")
@@ -968,9 +981,7 @@ def rebase_seed_dates(data_dir: Path, sim_start: date) -> None:
             continue
 
         frontmatter = parts[1]
-        new_frontmatter = _DATE_RE.sub(
-            lambda m: _shift_date(m.group(1), offset), frontmatter
-        )
+        new_frontmatter = _DATE_RE.sub(lambda m: _shift_date(m.group(1), offset), frontmatter)
 
         if new_frontmatter != frontmatter:
             md_file.write_text(
@@ -1013,6 +1024,7 @@ The core LLM-driven event generator. Uses pydantic-ai to generate structured Sim
 ```python
 # tests/test_simulator_event_gen.py
 """Tests for LLM-driven event generation (mocked)."""
+
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -1095,6 +1107,7 @@ Uses pydantic-ai with structured output to generate SimulatedEvent
 objects for a single simulation tick. Safety enforcement strips
 body_template from restricted types (coaching, feedback).
 """
+
 from __future__ import annotations
 
 import logging
@@ -1165,6 +1178,7 @@ Runs deterministic agents every tick and LLM synthesis at weekly boundaries.
 ```python
 # tests/test_simulator_checkpoints.py
 """Tests for tiered checkpoint runner."""
+
 from __future__ import annotations
 
 from datetime import date
@@ -1192,8 +1206,9 @@ class TestCheckpointScheduling:
 class TestDeterministicCheckpoint:
     async def test_runs_cache_refresh(self):
         """Deterministic checkpoint refreshes caches."""
-        with patch("agents.simulator_pipeline.checkpoints._refresh_caches",
-                    new_callable=AsyncMock) as mock_refresh:
+        with patch(
+            "agents.simulator_pipeline.checkpoints._refresh_caches", new_callable=AsyncMock
+        ) as mock_refresh:
             await run_deterministic_checkpoint()
             mock_refresh.assert_called_once()
 
@@ -1201,12 +1216,17 @@ class TestDeterministicCheckpoint:
 class TestWeeklyCheckpoint:
     async def test_runs_synthesis_agents(self):
         """Weekly checkpoint runs briefing, snapshot, overview synthesis."""
-        with patch("agents.simulator_pipeline.checkpoints._run_briefing",
-                    new_callable=AsyncMock) as mock_brief, \
-             patch("agents.simulator_pipeline.checkpoints._run_snapshot",
-                    new_callable=AsyncMock) as mock_snap, \
-             patch("agents.simulator_pipeline.checkpoints._run_profiler",
-                    new_callable=AsyncMock) as mock_prof:
+        with (
+            patch(
+                "agents.simulator_pipeline.checkpoints._run_briefing", new_callable=AsyncMock
+            ) as mock_brief,
+            patch(
+                "agents.simulator_pipeline.checkpoints._run_snapshot", new_callable=AsyncMock
+            ) as mock_snap,
+            patch(
+                "agents.simulator_pipeline.checkpoints._run_profiler", new_callable=AsyncMock
+            ) as mock_prof,
+        ):
             await run_weekly_checkpoint()
             mock_brief.assert_called_once()
             mock_snap.assert_called_once()
@@ -1223,6 +1243,7 @@ Every tick: deterministic cache refresh (nudges, team health, activity).
 Weekly boundaries (Friday): LLM synthesis (briefing, snapshot, profiler).
 On significant events: immediate synthesis for relevant agents.
 """
+
 from __future__ import annotations
 
 import logging
@@ -1264,6 +1285,7 @@ async def _refresh_caches() -> None:
     """Refresh data caches (management state, nudges, team health)."""
     try:
         from cockpit.api.cache import cache
+
         await cache.refresh()
     except Exception:
         _log.debug("Cache refresh skipped (not in API context)")
@@ -1279,9 +1301,7 @@ async def _run_briefing() -> None:
         briefing = await generate_briefing()
         md = format_briefing_md(briefing)
         write_briefing_to_vault(md)
-        (PROFILES_DIR / "management-briefing.json").write_text(
-            briefing.model_dump_json(indent=2)
-        )
+        (PROFILES_DIR / "management-briefing.json").write_text(briefing.model_dump_json(indent=2))
         _log.info("Briefing synthesized: %s", briefing.headline)
     except Exception:
         _log.exception("Briefing synthesis failed")
@@ -1304,8 +1324,11 @@ async def _run_profiler() -> None:
     """Run management profiler synthesis."""
     try:
         from agents.management_profiler import (
-            generate_and_load_management_facts, synthesize_profile,
-            build_profile, save_profile, load_profile,
+            generate_and_load_management_facts,
+            synthesize_profile,
+            build_profile,
+            save_profile,
+            load_profile,
         )
 
         facts = generate_and_load_management_facts()
@@ -1347,6 +1370,7 @@ The main simulator agent that orchestrates the full simulation loop.
 ```python
 # tests/test_simulator_integration.py
 """Integration test for the full simulation loop (mocked LLM)."""
+
 from __future__ import annotations
 
 from datetime import date
@@ -1384,15 +1408,13 @@ class TestRunSimulation:
         mock_result = MagicMock()
         mock_result.output = mock_events
 
-        with patch("agents.simulator_pipeline.event_gen._event_agent") as mock_agent, \
-             patch("agents.simulator_pipeline.checkpoints._refresh_caches",
-                   new_callable=AsyncMock), \
-             patch("agents.simulator_pipeline.checkpoints._run_briefing",
-                   new_callable=AsyncMock), \
-             patch("agents.simulator_pipeline.checkpoints._run_snapshot",
-                   new_callable=AsyncMock), \
-             patch("agents.simulator_pipeline.checkpoints._run_profiler",
-                   new_callable=AsyncMock):
+        with (
+            patch("agents.simulator_pipeline.event_gen._event_agent") as mock_agent,
+            patch("agents.simulator_pipeline.checkpoints._refresh_caches", new_callable=AsyncMock),
+            patch("agents.simulator_pipeline.checkpoints._run_briefing", new_callable=AsyncMock),
+            patch("agents.simulator_pipeline.checkpoints._run_snapshot", new_callable=AsyncMock),
+            patch("agents.simulator_pipeline.checkpoints._run_profiler", new_callable=AsyncMock),
+        ):
             mock_agent.run = AsyncMock(return_value=mock_result)
 
             sim_dir = await run_simulation(
@@ -1434,15 +1456,13 @@ class TestRunSimulation:
         mock_result = MagicMock()
         mock_result.output = mock_events
 
-        with patch("agents.simulator_pipeline.event_gen._event_agent") as mock_agent, \
-             patch("agents.simulator_pipeline.checkpoints._refresh_caches",
-                   new_callable=AsyncMock), \
-             patch("agents.simulator_pipeline.checkpoints._run_briefing",
-                   new_callable=AsyncMock), \
-             patch("agents.simulator_pipeline.checkpoints._run_snapshot",
-                   new_callable=AsyncMock), \
-             patch("agents.simulator_pipeline.checkpoints._run_profiler",
-                   new_callable=AsyncMock):
+        with (
+            patch("agents.simulator_pipeline.event_gen._event_agent") as mock_agent,
+            patch("agents.simulator_pipeline.checkpoints._refresh_caches", new_callable=AsyncMock),
+            patch("agents.simulator_pipeline.checkpoints._run_briefing", new_callable=AsyncMock),
+            patch("agents.simulator_pipeline.checkpoints._run_snapshot", new_callable=AsyncMock),
+            patch("agents.simulator_pipeline.checkpoints._run_profiler", new_callable=AsyncMock),
+        ):
             mock_agent.run = AsyncMock(return_value=mock_result)
 
             # Run first 3 days, then simulate a failure
@@ -1467,6 +1487,7 @@ class TestRunSimulation:
 Advances through simulated workdays, generating plausible events via LLM,
 running tiered checkpoints, and producing a complete DATA_DIR snapshot.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -1576,8 +1597,7 @@ async def run_simulation(
     if resume_dir:
         sim_dir = resume_dir
         manifest = load_manifest(sim_dir)
-        _log.info("Resuming simulation %s from tick %s",
-                   manifest.id, manifest.last_completed_tick)
+        _log.info("Resuming simulation %s from tick %s", manifest.id, manifest.last_completed_tick)
     else:
         window_days = _parse_window(window)
         start_date, end_date = _compute_dates(window_days)
@@ -1631,10 +1651,12 @@ async def run_simulation(
 
     try:
         for tick_date in all_days:
-            _log.info("Tick: %s (%d/%d)",
-                       tick_date.isoformat(),
-                       manifest.ticks_completed + 1,
-                       manifest.ticks_total)
+            _log.info(
+                "Tick: %s (%d/%d)",
+                tick_date.isoformat(),
+                manifest.ticks_completed + 1,
+                manifest.ticks_total,
+            )
 
             # Build prompt and generate events
             state_summary = _summarize_state(sim_dir)
@@ -1679,17 +1701,21 @@ async def run_simulation(
         # Mark completed
         manifest.status = SimStatus.COMPLETED
         from datetime import datetime, timezone
+
         manifest.completed_at = datetime.now(timezone.utc)
         save_manifest(sim_dir, manifest)
 
-        _log.info("Simulation %s completed: %d ticks, %d checkpoints",
-                   manifest.id, manifest.ticks_completed, manifest.checkpoints_run)
+        _log.info(
+            "Simulation %s completed: %d ticks, %d checkpoints",
+            manifest.id,
+            manifest.ticks_completed,
+            manifest.checkpoints_run,
+        )
 
     except Exception:
         manifest.status = SimStatus.FAILED
         save_manifest(sim_dir, manifest)
-        _log.exception("Simulation %s failed at tick %s",
-                        manifest.id, manifest.last_completed_tick)
+        _log.exception("Simulation %s failed at tick %s", manifest.id, manifest.last_completed_tick)
         raise
     finally:
         config.reset_data_dir()
@@ -1705,7 +1731,9 @@ async def main() -> None:
     )
     parser.add_argument("--role", type=str, help="Role key (e.g. engineering-manager)")
     parser.add_argument("--variant", type=str, default=None, help="Role variant")
-    parser.add_argument("--window", type=str, default="30d", help="Simulation window (e.g. 7d, 30d, 90d)")
+    parser.add_argument(
+        "--window", type=str, default="30d", help="Simulation window (e.g. 7d, 30d, 90d)"
+    )
     parser.add_argument("--seed", type=str, default="demo-data/", help="Seed corpus path")
     parser.add_argument("--scenario", type=str, default=None, help="Scenario modifier")
     parser.add_argument("--audience", type=str, default=None, help="Audience archetype")
