@@ -66,7 +66,8 @@ class KeyResultState:
     direction: str = "increase"
     confidence: float | None = None
     last_updated: str = ""
-    stale: bool = False          # computed: last_updated > 14 days
+    stale: bool = False  # computed: last_updated > 14 days
+
 
 @dataclass
 class OKRState:
@@ -80,8 +81,9 @@ class OKRState:
     score: float | None = None
     scored_at: str = ""
     file_path: Path | None = None
-    at_risk_count: int = 0       # KRs with confidence < 0.5
-    stale_kr_count: int = 0      # KRs with last_updated > 14d
+    at_risk_count: int = 0  # KRs with confidence < 0.5
+    stale_kr_count: int = 0  # KRs with last_updated > 14d
+
 
 @dataclass
 class OKRSnapshot:
@@ -142,6 +144,7 @@ class SmartGoalState:
     review_overdue: bool = False
     days_since_review: int | None = None
 
+
 @dataclass
 class SmartGoalSnapshot:
     goals: list[SmartGoalState] = field(default_factory=list)
@@ -190,6 +193,7 @@ class IncidentState:
     open: bool = False
     has_postmortem: bool = False
 
+
 @dataclass
 class IncidentSnapshot:
     incidents: list[IncidentState] = field(default_factory=list)
@@ -228,6 +232,7 @@ class PostmortemActionState:
     file_path: Path | None = None
     overdue: bool = False
     days_overdue: int = 0
+
 
 @dataclass
 class PostmortemActionSnapshot:
@@ -275,6 +280,7 @@ class ReviewCycleState:
     peer_feedback_gap: int = 0
     overdue: bool = False
 
+
 @dataclass
 class ReviewCycleSnapshot:
     cycles: list[ReviewCycleState] = field(default_factory=list)
@@ -316,7 +322,8 @@ class StatusReportState:
     edited: bool = False
     file_path: Path | None = None
     days_since: int | None = None
-    stale: bool = False          # weekly: >9d, monthly: >35d
+    stale: bool = False  # weekly: >9d, monthly: >35d
+
 
 @dataclass
 class StatusReportSnapshot:

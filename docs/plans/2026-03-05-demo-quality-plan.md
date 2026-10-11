@@ -61,7 +61,9 @@ class DemoScene(BaseModel):
     title: str = Field(description="Scene title (used in slide heading)")
     narration: str = Field(description="Spoken narration text for this scene")
     duration_hint: float = Field(ge=1.0, description="Estimated duration in seconds")
-    key_points: list[str] = Field(default_factory=list, description="Bullet points to display on the slide")
+    key_points: list[str] = Field(
+        default_factory=list, description="Bullet points to display on the slide"
+    )
     screenshot: ScreenshotSpec = Field(description="How to capture the visual")
     visual_type: Literal["screenshot", "diagram", "chart"] = Field(
         default="screenshot",
@@ -81,13 +83,16 @@ Add `DemoQualityReport` model (used by critique stage):
 ```python
 class QualityDimension(BaseModel):
     """Evaluation of one quality dimension."""
+
     name: str
     passed: bool
     severity: Literal["critical", "important", "minor"] | None = None
     issues: list[str] = Field(default_factory=list)
 
+
 class DemoQualityReport(BaseModel):
     """Output of the self-critique evaluation."""
+
     dimensions: list[QualityDimension]
     overall_pass: bool
     revision_notes: str | None = None
@@ -98,7 +103,9 @@ class DemoQualityReport(BaseModel):
 Add `--duration` argument to the argparse block (after `--format`):
 ```python
 parser.add_argument(
-    "--duration", type=str, default=None,
+    "--duration",
+    type=str,
+    default=None,
     help="Target duration (e.g., '5m', '10m', '90s'). Defaults based on audience.",
 )
 ```
@@ -107,7 +114,12 @@ Add duration parsing function:
 ```python
 def parse_duration(duration_str: str | None, audience: str) -> int:
     """Parse duration string to seconds. Falls back to audience defaults."""
-    AUDIENCE_DEFAULTS = {"family": 180, "team-member": 420, "leadership": 600, "technical-peer": 720}
+    AUDIENCE_DEFAULTS = {
+        "family": 180,
+        "team-member": 420,
+        "leadership": 600,
+        "technical-peer": 720,
+    }
     if duration_str is None:
         return AUDIENCE_DEFAULTS.get(audience, 420)
     duration_str = duration_str.strip().lower()
@@ -122,12 +134,16 @@ def parse_duration(duration_str: str | None, audience: str) -> int:
 
 ```python
 """Tests for extended demo models and duration parsing."""
+
 from agents.demo_models import DemoScene, ScreenshotSpec, DemoQualityReport, QualityDimension
+
 
 class TestDemoSceneExtended:
     def test_visual_type_default(self):
         scene = DemoScene(
-            title="Test", narration="test", duration_hint=5.0,
+            title="Test",
+            narration="test",
+            duration_hint=5.0,
             screenshot=ScreenshotSpec(url="http://localhost"),
         )
         assert scene.visual_type == "screenshot"
@@ -136,7 +152,9 @@ class TestDemoSceneExtended:
 
     def test_visual_type_diagram(self):
         scene = DemoScene(
-            title="Architecture", narration="test", duration_hint=8.0,
+            title="Architecture",
+            narration="test",
+            duration_hint=8.0,
             screenshot=ScreenshotSpec(url="http://localhost"),
             visual_type="diagram",
             diagram_spec="direction: right\nA -> B -> C",
@@ -147,11 +165,14 @@ class TestDemoSceneExtended:
     def test_backward_compatible_serialization(self):
         """Old scripts without new fields still parse."""
         data = {
-            "title": "Test", "narration": "test", "duration_hint": 5.0,
+            "title": "Test",
+            "narration": "test",
+            "duration_hint": 5.0,
             "screenshot": {"url": "http://localhost"},
         }
         scene = DemoScene.model_validate(data)
         assert scene.visual_type == "screenshot"
+
 
 class TestQualityReport:
     def test_all_pass(self):
@@ -164,32 +185,40 @@ class TestQualityReport:
     def test_failure(self):
         report = DemoQualityReport(
             dimensions=[
-                QualityDimension(name="style", passed=False, severity="critical", issues=["Corporatism detected"]),
+                QualityDimension(
+                    name="style", passed=False, severity="critical", issues=["Corporatism detected"]
+                ),
             ],
             overall_pass=False,
             revision_notes="Fix corporate language",
         )
         assert not report.overall_pass
 
+
 class TestParseDuration:
     def test_minutes(self):
         from agents.demo import parse_duration
+
         assert parse_duration("5m", "family") == 300
 
     def test_seconds(self):
         from agents.demo import parse_duration
+
         assert parse_duration("90s", "family") == 90
 
     def test_audience_default_family(self):
         from agents.demo import parse_duration
+
         assert parse_duration(None, "family") == 180
 
     def test_audience_default_peers(self):
         from agents.demo import parse_duration
+
         assert parse_duration(None, "technical-peer") == 720
 
     def test_bare_number(self):
         from agents.demo import parse_duration
+
         assert parse_duration("300", "family") == 300
 ```
 
@@ -242,6 +271,7 @@ closing: "Land on impact or next step. No ceremony, no recap."
 
 ```python
 """Narrative framework selection and duration-driven planning constraints."""
+
 from __future__ import annotations
 
 import logging
@@ -315,10 +345,25 @@ AUDIENCE_FRAMEWORK: dict[str, str] = {
 
 # Duration → planning constraints
 DURATION_TIERS: list[dict] = [
-    {"max_seconds": 180,  "scenes": (3, 4),  "words_per_scene": (15, 25), "depth": "headlines only"},
-    {"max_seconds": 420,  "scenes": (5, 7),  "words_per_scene": (30, 50), "depth": "key points with context"},
-    {"max_seconds": 900,  "scenes": (8, 12), "words_per_scene": (50, 80), "depth": "detailed explanations"},
-    {"max_seconds": 1200, "scenes": (10, 15), "words_per_scene": (60, 100), "depth": "full rationale with trade-offs"},
+    {"max_seconds": 180, "scenes": (3, 4), "words_per_scene": (15, 25), "depth": "headlines only"},
+    {
+        "max_seconds": 420,
+        "scenes": (5, 7),
+        "words_per_scene": (30, 50),
+        "depth": "key points with context",
+    },
+    {
+        "max_seconds": 900,
+        "scenes": (8, 12),
+        "words_per_scene": (50, 80),
+        "depth": "detailed explanations",
+    },
+    {
+        "max_seconds": 1200,
+        "scenes": (10, 15),
+        "words_per_scene": (60, 100),
+        "depth": "full rationale with trade-offs",
+    },
 ]
 
 
@@ -380,7 +425,9 @@ def format_planning_context(
     words_min, words_max = duration_constraints["words_per_scene"]
     lines.append(f"## Duration Constraints: {minutes:.0f} minutes")
     lines.append(f"Scene count: {scene_min}-{scene_max} scenes")
-    lines.append(f"Narration per scene: {words_min}-{words_max} words (~{words_min // 2.5:.0f}-{words_max // 2.5:.0f} seconds of speech)")
+    lines.append(
+        f"Narration per scene: {words_min}-{words_max} words (~{words_min // 2.5:.0f}-{words_max // 2.5:.0f} seconds of speech)"
+    )
     lines.append(f"Depth: {duration_constraints['depth']}")
     lines.append(f"Total narration budget: ~{int(minutes * 2.5 * 25)} words across all scenes")
     lines.append("")
@@ -392,10 +439,16 @@ def format_planning_context(
 
 ```python
 """Tests for narrative framework selection and planning constraints."""
+
 from agents.demo_pipeline.narrative import (
-    load_style_guide, select_framework, get_duration_constraints,
-    format_planning_context, FRAMEWORKS, AUDIENCE_FRAMEWORK,
+    load_style_guide,
+    select_framework,
+    get_duration_constraints,
+    format_planning_context,
+    FRAMEWORKS,
+    AUDIENCE_FRAMEWORK,
 )
+
 
 class TestSelectFramework:
     def test_family_gets_guided_tour(self):
@@ -418,6 +471,7 @@ class TestSelectFramework:
         fw = select_framework("stranger")
         assert fw["name"] == "Design Rationale"
 
+
 class TestDurationConstraints:
     def test_3_minute_demo(self):
         c = get_duration_constraints(180)
@@ -436,6 +490,7 @@ class TestDurationConstraints:
         c = get_duration_constraints(3600)
         assert c["scenes"] == (10, 15)
 
+
 class TestLoadStyleGuide:
     def test_loads_from_default_path(self):
         guide = load_style_guide()
@@ -446,6 +501,7 @@ class TestLoadStyleGuide:
     def test_missing_file_returns_empty(self, tmp_path):
         guide = load_style_guide(tmp_path / "nonexistent.yaml")
         assert guide == {}
+
 
 class TestFormatPlanningContext:
     def test_contains_all_sections(self):
@@ -482,6 +538,7 @@ The readiness gate checks system health and starts required services. Uses direc
 
 ```python
 """System readiness gate — ensures system is presentable before demo generation."""
+
 from __future__ import annotations
 
 import logging
@@ -494,6 +551,7 @@ log = logging.getLogger(__name__)
 @dataclass
 class ReadinessResult:
     """Result of the system readiness check."""
+
     ready: bool
     health_score: str = ""  # e.g., "74/75"
     issues: list[str] = field(default_factory=list)
@@ -600,9 +658,29 @@ async def gather_research(
 ```python
 AUDIENCE_SOURCES: dict[str, list[str]] = {
     "family": ["component_registry", "health_summary", "profile_facts"],
-    "team-member": ["component_registry", "health_summary", "introspect_partial", "system_docs_summary"],
-    "leadership": ["component_registry", "health_summary", "introspect", "langfuse_metrics", "system_docs", "web_research"],
-    "technical-peer": ["component_registry", "health_summary", "introspect", "langfuse_metrics", "qdrant_stats", "system_docs", "web_research"],
+    "team-member": [
+        "component_registry",
+        "health_summary",
+        "introspect_partial",
+        "system_docs_summary",
+    ],
+    "leadership": [
+        "component_registry",
+        "health_summary",
+        "introspect",
+        "langfuse_metrics",
+        "system_docs",
+        "web_research",
+    ],
+    "technical-peer": [
+        "component_registry",
+        "health_summary",
+        "introspect",
+        "langfuse_metrics",
+        "qdrant_stats",
+        "system_docs",
+        "web_research",
+    ],
 }
 ```
 
@@ -648,6 +726,7 @@ A Pydantic AI agent that evaluates a DemoScript against 8 quality dimensions and
 
 ```python
 """Self-critique and revision loop for demo script quality."""
+
 from __future__ import annotations
 
 import logging
@@ -660,14 +739,14 @@ log = logging.getLogger(__name__)
 MAX_ITERATIONS = 3
 
 QUALITY_DIMENSIONS = [
-    "narrative_coherence",    # Follows framework? Logical arc?
-    "audience_calibration",   # Vocabulary appropriate? Respects show/skip?
-    "content_adequacy",       # Enough substance? Each scene justified?
-    "duration_feasibility",   # Word count × speech rate ≈ target?
-    "style_compliance",       # Matches style guide? No corporatisms?
-    "factual_grounding",      # Claims match research context?
-    "visual_appropriateness", # Right mix of screenshots/diagrams/charts?
-    "key_points_quality",     # Bullets substantive, not vague?
+    "narrative_coherence",  # Follows framework? Logical arc?
+    "audience_calibration",  # Vocabulary appropriate? Respects show/skip?
+    "content_adequacy",  # Enough substance? Each scene justified?
+    "duration_feasibility",  # Word count × speech rate ≈ target?
+    "style_compliance",  # Matches style guide? No corporatisms?
+    "factual_grounding",  # Claims match research context?
+    "visual_appropriateness",  # Right mix of screenshots/diagrams/charts?
+    "key_points_quality",  # Bullets substantive, not vague?
 ]
 ```
 
@@ -741,6 +820,7 @@ Mock the Pydantic AI agents using `@patch` on the `agent.run()` method. Create m
 
 ```python
 """D2 architecture diagram generation with Gruvbox theme."""
+
 from __future__ import annotations
 
 import logging
@@ -810,6 +890,7 @@ D2 rendering: write source to temp `.d2` file, run `d2 --theme 200 --dark-theme 
 
 ```python
 """Gruvbox-themed data visualization for demos."""
+
 from __future__ import annotations
 
 import logging
@@ -946,68 +1027,83 @@ system_prompt = (
 Insert between step 1 (parse request) and the current screenshot capture:
 
 ```python
-    # 2. Parse duration
-    target_seconds = parse_duration(duration, archetype)
+# 2. Parse duration
+target_seconds = parse_duration(duration, archetype)
 
-    # 3. System readiness gate
-    with tracer.start_as_current_span("demo.readiness"):
-        from agents.demo_pipeline.readiness import check_readiness
-        progress("Checking system readiness...")
-        readiness = check_readiness(
-            require_tts=(format == "video"),
-            auto_fix=True,
-            on_progress=progress,
-        )
-        if not readiness.ready:
-            issues_str = "\n".join(f"  - {i}" for i in readiness.issues)
-            raise RuntimeError(
-                f"System not ready for demo. Issues:\n{issues_str}\n"
-                f"Fix these issues and retry."
-            )
+# 3. System readiness gate
+with tracer.start_as_current_span("demo.readiness"):
+    from agents.demo_pipeline.readiness import check_readiness
 
-    # 4. Subject research
-    with tracer.start_as_current_span("demo.research"):
-        from agents.demo_pipeline.research import gather_research
-        progress("Researching subject matter...")
-        research_context = await gather_research(
-            scope=scope, audience=archetype, on_progress=progress,
-        )
-
-    # 5. Load narrative context
-    from agents.demo_pipeline.narrative import (
-        load_style_guide, select_framework,
-        get_duration_constraints, format_planning_context,
+    progress("Checking system readiness...")
+    readiness = check_readiness(
+        require_tts=(format == "video"),
+        auto_fix=True,
+        on_progress=progress,
     )
-    style_guide = load_style_guide()
-    framework = select_framework(archetype)
-    duration_constraints = get_duration_constraints(target_seconds)
-    planning_context = format_planning_context(style_guide, framework, duration_constraints, target_seconds)
-
-    # 6. Plan demo (LLM) — using enriched prompt
-    with tracer.start_as_current_span("demo.plan"):
-        progress("Planning demo scenes...")
-        prompt = build_planning_prompt(
-            scope, archetype, persona, research_context, planning_context,
+    if not readiness.ready:
+        issues_str = "\n".join(f"  - {i}" for i in readiness.issues)
+        raise RuntimeError(
+            f"System not ready for demo. Issues:\n{issues_str}\nFix these issues and retry."
         )
-        if extra_context:
-            prompt += f"\n\nAdditional audience context: {extra_context}"
-        result = await agent.run(prompt)
-        script = result.output
 
-    # 7. Self-critique & revision
-    with tracer.start_as_current_span("demo.critique"):
-        from agents.demo_pipeline.critique import critique_and_revise
-        progress("Evaluating script quality...")
-        script, quality_report = await critique_and_revise(
-            script=script,
-            research_context=research_context,
-            style_guide=style_guide,
-            framework=framework,
-            target_seconds=target_seconds,
-            on_progress=progress,
+# 4. Subject research
+with tracer.start_as_current_span("demo.research"):
+    from agents.demo_pipeline.research import gather_research
+
+    progress("Researching subject matter...")
+    research_context = await gather_research(
+        scope=scope,
+        audience=archetype,
+        on_progress=progress,
+    )
+
+# 5. Load narrative context
+from agents.demo_pipeline.narrative import (
+    load_style_guide,
+    select_framework,
+    get_duration_constraints,
+    format_planning_context,
+)
+
+style_guide = load_style_guide()
+framework = select_framework(archetype)
+duration_constraints = get_duration_constraints(target_seconds)
+planning_context = format_planning_context(
+    style_guide, framework, duration_constraints, target_seconds
+)
+
+# 6. Plan demo (LLM) — using enriched prompt
+with tracer.start_as_current_span("demo.plan"):
+    progress("Planning demo scenes...")
+    prompt = build_planning_prompt(
+        scope,
+        archetype,
+        persona,
+        research_context,
+        planning_context,
+    )
+    if extra_context:
+        prompt += f"\n\nAdditional audience context: {extra_context}"
+    result = await agent.run(prompt)
+    script = result.output
+
+# 7. Self-critique & revision
+with tracer.start_as_current_span("demo.critique"):
+    from agents.demo_pipeline.critique import critique_and_revise
+
+    progress("Evaluating script quality...")
+    script, quality_report = await critique_and_revise(
+        script=script,
+        research_context=research_context,
+        style_guide=style_guide,
+        framework=framework,
+        target_seconds=target_seconds,
+        on_progress=progress,
+    )
+    if not quality_report.overall_pass:
+        progress(
+            f"WARNING: Script quality check has {sum(1 for d in quality_report.dimensions if not d.passed)} issues remaining"
         )
-        if not quality_report.overall_pass:
-            progress(f"WARNING: Script quality check has {sum(1 for d in quality_report.dimensions if not d.passed)} issues remaining")
 ```
 
 ### 7d: Update visual generation
@@ -1015,43 +1111,47 @@ Insert between step 1 (parse request) and the current screenshot capture:
 Modify the screenshot capture section to handle `visual_type`:
 
 ```python
-    # 8. Generate visuals (screenshots + diagrams + charts)
-    with tracer.start_as_current_span("demo.visuals"):
-        progress("Generating visuals...")
-        screenshot_specs = []
-        diagram_scenes = []
-        chart_scenes = []
+# 8. Generate visuals (screenshots + diagrams + charts)
+with tracer.start_as_current_span("demo.visuals"):
+    progress("Generating visuals...")
+    screenshot_specs = []
+    diagram_scenes = []
+    chart_scenes = []
 
-        for i, scene in enumerate(script.scenes, 1):
-            slug = re.sub(r"[^a-z0-9]+", "-", scene.title.lower()).strip("-")
-            name = f"{i:02d}-{slug}"
-            if scene.visual_type == "screenshot":
-                screenshot_specs.append((name, scene.screenshot))
-            elif scene.visual_type == "diagram":
-                diagram_scenes.append((name, scene))
-            elif scene.visual_type == "chart":
-                chart_scenes.append((name, scene))
+    for i, scene in enumerate(script.scenes, 1):
+        slug = re.sub(r"[^a-z0-9]+", "-", scene.title.lower()).strip("-")
+        name = f"{i:02d}-{slug}"
+        if scene.visual_type == "screenshot":
+            screenshot_specs.append((name, scene.screenshot))
+        elif scene.visual_type == "diagram":
+            diagram_scenes.append((name, scene))
+        elif scene.visual_type == "chart":
+            chart_scenes.append((name, scene))
 
-        # Screenshots via Playwright
-        screenshot_paths = await capture_screenshots(
-            screenshot_specs, demo_dir / "screenshots", on_progress=progress
-        ) if screenshot_specs else []
+    # Screenshots via Playwright
+    screenshot_paths = (
+        await capture_screenshots(screenshot_specs, demo_dir / "screenshots", on_progress=progress)
+        if screenshot_specs
+        else []
+    )
 
-        # Diagrams via D2
-        if diagram_scenes:
-            from agents.demo_pipeline.diagrams import render_d2
-            for name, scene in diagram_scenes:
-                path = demo_dir / "screenshots" / f"{name}.png"
-                render_d2(scene.diagram_spec or "", path)
-                screenshot_paths.append(path)
+    # Diagrams via D2
+    if diagram_scenes:
+        from agents.demo_pipeline.diagrams import render_d2
 
-        # Charts via Matplotlib
-        if chart_scenes:
-            from agents.demo_pipeline.charts import render_chart
-            for name, scene in chart_scenes:
-                path = demo_dir / "screenshots" / f"{name}.png"
-                render_chart(scene.diagram_spec or "{}", path)
-                screenshot_paths.append(path)
+        for name, scene in diagram_scenes:
+            path = demo_dir / "screenshots" / f"{name}.png"
+            render_d2(scene.diagram_spec or "", path)
+            screenshot_paths.append(path)
+
+    # Charts via Matplotlib
+    if chart_scenes:
+        from agents.demo_pipeline.charts import render_chart
+
+        for name, scene in chart_scenes:
+            path = demo_dir / "screenshots" / f"{name}.png"
+            render_chart(scene.diagram_spec or "{}", path)
+            screenshot_paths.append(path)
 ```
 
 Also update the `screenshot_map` construction to handle all visual types.

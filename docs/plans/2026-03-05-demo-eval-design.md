@@ -112,12 +112,14 @@ class DemoEvalDimension(BaseModel):
     issues: list[str]
     evidence: str | None = None  # quote or screenshot description
 
+
 class DemoEvalReport(BaseModel):
     dimensions: list[DemoEvalDimension]
     overall_pass: bool
     overall_score: float  # weighted average
     iteration: int
     adjustments_applied: list[str]
+
 
 class DemoEvalResult(BaseModel):
     scenario: str

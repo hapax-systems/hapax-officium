@@ -478,53 +478,54 @@ class TestValidateDistribution:
 Add to the existing `TestBuildTickPrompt` class:
 
 ```python
-    def test_prompt_includes_org_context(self):
-        """Tick prompt includes org context when present in profile."""
-        workflows = load_workflow_semantics(_WORKFLOW_SEMANTICS)
-        roles = load_role_matrix(_ROLE_MATRIX)
-        org = load_org_dossier(_ORG_DOSSIER)
+def test_prompt_includes_org_context(self):
+    """Tick prompt includes org context when present in profile."""
+    workflows = load_workflow_semantics(_WORKFLOW_SEMANTICS)
+    roles = load_role_matrix(_ROLE_MATRIX)
+    org = load_org_dossier(_ORG_DOSSIER)
 
-        profile = compose_role_profile(
-            role_name="engineering-manager",
-            variant="experienced-em",
-            roles=roles,
-            workflows=workflows,
-            org=org,
-        )
+    profile = compose_role_profile(
+        role_name="engineering-manager",
+        variant="experienced-em",
+        roles=roles,
+        workflows=workflows,
+        org=org,
+    )
 
-        prompt = build_tick_prompt(
-            profile=profile,
-            current_date="2026-03-05",
-            existing_state_summary="state",
-        )
-        assert "growth" in prompt.lower()
-        assert "SOC2" in prompt
+    prompt = build_tick_prompt(
+        profile=profile,
+        current_date="2026-03-05",
+        existing_state_summary="state",
+    )
+    assert "growth" in prompt.lower()
+    assert "SOC2" in prompt
 
-    def test_prompt_uses_effective_weight(self):
-        """Tick prompt shows effective_weight, not raw modifiers."""
-        workflows = load_workflow_semantics(_WORKFLOW_SEMANTICS)
-        roles = load_role_matrix(_ROLE_MATRIX)
-        org = load_org_dossier(_ORG_DOSSIER)
-        org["company_stage"] = "startup"
 
-        profile = compose_role_profile(
-            role_name="engineering-manager",
-            variant="senior-em",
-            roles=roles,
-            workflows=workflows,
-            org=org,
-        )
+def test_prompt_uses_effective_weight(self):
+    """Tick prompt shows effective_weight, not raw modifiers."""
+    workflows = load_workflow_semantics(_WORKFLOW_SEMANTICS)
+    roles = load_role_matrix(_ROLE_MATRIX)
+    org = load_org_dossier(_ORG_DOSSIER)
+    org["company_stage"] = "startup"
 
-        prompt = build_tick_prompt(
-            profile=profile,
-            current_date="2026-03-05",
-            existing_state_summary="state",
-        )
-        # senior-em decision: 1.5, startup decision: 1.5 -> effective 2.25
-        # Formatted as f"{effective:.1f}x" -> "2.2x" (banker's rounding)
-        # Verify the decision line contains the three-layer result, not 1.5
-        decision_line = [l for l in prompt.split("\n") if "decision:" in l.lower()][0]
-        assert "1.5x" not in decision_line  # NOT the raw role modifier
+    profile = compose_role_profile(
+        role_name="engineering-manager",
+        variant="senior-em",
+        roles=roles,
+        workflows=workflows,
+        org=org,
+    )
+
+    prompt = build_tick_prompt(
+        profile=profile,
+        current_date="2026-03-05",
+        existing_state_summary="state",
+    )
+    # senior-em decision: 1.5, startup decision: 1.5 -> effective 2.25
+    # Formatted as f"{effective:.1f}x" -> "2.2x" (banker's rounding)
+    # Verify the decision line contains the three-layer result, not 1.5
+    decision_line = [l for l in prompt.split("\n") if "decision:" in l.lower()][0]
+    assert "1.5x" not in decision_line  # NOT the raw role modifier
 ```
 
 - [ ] **Step 6: Run tests to verify they fail**
@@ -640,9 +641,13 @@ def compose_role_profile(
 
             if effective != raw:
                 _log.warning(
-                    "Clamped %s modifier: %.2f -> %.2f "
-                    "(role=%.1f, scenario=%.1f, org=%.1f)",
-                    wf_name, raw, effective, role_mod, scenario_mod, org_mod,
+                    "Clamped %s modifier: %.2f -> %.2f (role=%.1f, scenario=%.1f, org=%.1f)",
+                    wf_name,
+                    raw,
+                    effective,
+                    role_mod,
+                    scenario_mod,
+                    org_mod,
                 )
 
             wf_entry["effective_weight"] = effective
@@ -735,8 +740,7 @@ def validate_distribution(
         scaled_hi = int(hi * scale + 0.5)
         if actual < scaled_lo or actual > scaled_hi:
             warnings.append(
-                f"{wf_type}: {actual} events in {window_days}d "
-                f"(expected {scaled_lo}-{scaled_hi})"
+                f"{wf_type}: {actual} events in {window_days}d (expected {scaled_lo}-{scaled_hi})"
             )
     return warnings
 ```
@@ -796,26 +800,44 @@ class TestSimulatorOrgDossier:
                 "scenario_overrides": {},
             }
 
-        with patch("agents.simulator.load_workflow_semantics", return_value={"one_on_one": {}}), \
-             patch("agents.simulator.load_role_matrix", return_value={"engineering-manager": {"variants": {"experienced-em": {}}, "workflows": ["one_on_one"]}}), \
-             patch("agents.simulator.load_scenarios", return_value={}), \
-             patch("agents.simulator.load_org_dossier", return_value={"company_stage": "startup"}) as mock_org, \
-             patch("agents.simulator._ORG_DOSSIER") as mock_path, \
-             patch("agents.simulator.compose_role_profile", side_effect=mock_compose), \
-             patch("agents.simulator.create_simulation") as mock_create, \
-             patch("agents.simulator.seed_simulation"), \
-             patch("agents.simulator.rebase_seed_dates"), \
-             patch("agents.simulator.save_manifest"), \
-             patch("agents.simulator.run_deterministic_checkpoint", new_callable=AsyncMock), \
-             patch("agents.simulator.generate_tick_events", new_callable=AsyncMock, return_value=[]), \
-             patch("agents.simulator.config"):
-
+        with (
+            patch("agents.simulator.load_workflow_semantics", return_value={"one_on_one": {}}),
+            patch(
+                "agents.simulator.load_role_matrix",
+                return_value={
+                    "engineering-manager": {
+                        "variants": {"experienced-em": {}},
+                        "workflows": ["one_on_one"],
+                    }
+                },
+            ),
+            patch("agents.simulator.load_scenarios", return_value={}),
+            patch(
+                "agents.simulator.load_org_dossier", return_value={"company_stage": "startup"}
+            ) as mock_org,
+            patch("agents.simulator._ORG_DOSSIER") as mock_path,
+            patch("agents.simulator.compose_role_profile", side_effect=mock_compose),
+            patch("agents.simulator.create_simulation") as mock_create,
+            patch("agents.simulator.seed_simulation"),
+            patch("agents.simulator.rebase_seed_dates"),
+            patch("agents.simulator.save_manifest"),
+            patch("agents.simulator.run_deterministic_checkpoint", new_callable=AsyncMock),
+            patch("agents.simulator.generate_tick_events", new_callable=AsyncMock, return_value=[]),
+            patch("agents.simulator.config"),
+        ):
             mock_path.is_file.return_value = True
-            mock_create.return_value = (tmp_path, MagicMock(
-                status="running", start_date="2026-03-01", end_date="2026-03-02",
-                last_completed_tick=None, ticks_completed=0, ticks_total=1,
-                checkpoints_run=0,
-            ))
+            mock_create.return_value = (
+                tmp_path,
+                MagicMock(
+                    status="running",
+                    start_date="2026-03-01",
+                    end_date="2026-03-02",
+                    last_completed_tick=None,
+                    ticks_completed=0,
+                    ticks_total=1,
+                    checkpoints_run=0,
+                ),
+            )
 
             await run_simulation(role="engineering-manager", window="1d", seed="demo-data/")
 
@@ -824,8 +846,10 @@ class TestSimulatorOrgDossier:
     async def test_distribution_validated_post_simulation(self, tmp_path):
         """validate_distribution is called after simulation completes."""
         mock_event = SimulatedEvent(
-            date="2026-03-01", workflow_type="decision",
-            subdirectory="decisions/", filename="test.md",
+            date="2026-03-01",
+            workflow_type="decision",
+            subdirectory="decisions/",
+            filename="test.md",
         )
         validated = []
 
@@ -833,32 +857,50 @@ class TestSimulatorOrgDossier:
             validated.append(len(events))
             return []
 
-        with patch("agents.simulator.load_workflow_semantics", return_value={"decision": {"subdirectory": "decisions/"}}), \
-             patch("agents.simulator.load_role_matrix", return_value={
-                 "engineering-manager": {
-                     "variants": {"experienced-em": {"cadence_modifiers": {}}},
-                     "workflows": ["decision"],
-                     "reference_distribution_30d": {"decision": [1, 5]},
-                 }
-             }), \
-             patch("agents.simulator.load_scenarios", return_value={}), \
-             patch("agents.simulator._ORG_DOSSIER") as mock_path, \
-             patch("agents.simulator.create_simulation") as mock_create, \
-             patch("agents.simulator.seed_simulation"), \
-             patch("agents.simulator.rebase_seed_dates"), \
-             patch("agents.simulator.save_manifest"), \
-             patch("agents.simulator.run_deterministic_checkpoint", new_callable=AsyncMock), \
-             patch("agents.simulator.generate_tick_events", new_callable=AsyncMock, return_value=[mock_event]), \
-             patch("agents.simulator.render_events"), \
-             patch("agents.simulator.validate_distribution", side_effect=mock_validate), \
-             patch("agents.simulator.config"):
-
+        with (
+            patch(
+                "agents.simulator.load_workflow_semantics",
+                return_value={"decision": {"subdirectory": "decisions/"}},
+            ),
+            patch(
+                "agents.simulator.load_role_matrix",
+                return_value={
+                    "engineering-manager": {
+                        "variants": {"experienced-em": {"cadence_modifiers": {}}},
+                        "workflows": ["decision"],
+                        "reference_distribution_30d": {"decision": [1, 5]},
+                    }
+                },
+            ),
+            patch("agents.simulator.load_scenarios", return_value={}),
+            patch("agents.simulator._ORG_DOSSIER") as mock_path,
+            patch("agents.simulator.create_simulation") as mock_create,
+            patch("agents.simulator.seed_simulation"),
+            patch("agents.simulator.rebase_seed_dates"),
+            patch("agents.simulator.save_manifest"),
+            patch("agents.simulator.run_deterministic_checkpoint", new_callable=AsyncMock),
+            patch(
+                "agents.simulator.generate_tick_events",
+                new_callable=AsyncMock,
+                return_value=[mock_event],
+            ),
+            patch("agents.simulator.render_events"),
+            patch("agents.simulator.validate_distribution", side_effect=mock_validate),
+            patch("agents.simulator.config"),
+        ):
             mock_path.is_file.return_value = False  # No org dossier
-            mock_create.return_value = (tmp_path, MagicMock(
-                status="running", start_date="2026-03-01", end_date="2026-03-02",
-                last_completed_tick=None, ticks_completed=0, ticks_total=1,
-                checkpoints_run=0,
-            ))
+            mock_create.return_value = (
+                tmp_path,
+                MagicMock(
+                    status="running",
+                    start_date="2026-03-01",
+                    end_date="2026-03-02",
+                    last_completed_tick=None,
+                    ticks_completed=0,
+                    ticks_total=1,
+                    checkpoints_run=0,
+                ),
+            )
 
             await run_simulation(role="engineering-manager", window="1d", seed="demo-data/")
 
@@ -972,8 +1014,12 @@ After `manifest.status = SimStatus.COMPLETED` (line 216), before the completion 
 In the argparse block (around line 249), add after `--resume`:
 
 ```python
-    parser.add_argument("--org-dossier", type=str, default=None,
-                        help="Path to org-dossier.yaml (default: config/org-dossier.yaml)")
+parser.add_argument(
+    "--org-dossier",
+    type=str,
+    default=None,
+    help="Path to org-dossier.yaml (default: config/org-dossier.yaml)",
+)
 ```
 
 In `main()`, pass it to `run_simulation()`:
@@ -1040,11 +1086,12 @@ class TestDemoSimulateRoleInference:
             demo_dir.mkdir(exist_ok=True)
             return demo_dir
 
-        with patch("agents.demo.run_simulation", side_effect=mock_run_sim), \
-             patch("agents.demo.run_warmup", side_effect=mock_warmup), \
-             patch("agents.demo.generate_demo", side_effect=mock_generate_demo), \
-             patch("agents.demo.config"):
-
+        with (
+            patch("agents.demo.run_simulation", side_effect=mock_run_sim),
+            patch("agents.demo.run_warmup", side_effect=mock_warmup),
+            patch("agents.demo.generate_demo", side_effect=mock_generate_demo),
+            patch("agents.demo.config"),
+        ):
             await _run_simulated_demo(
                 request="show the VP of engineering dashboard",
                 window="5d",
@@ -1071,11 +1118,12 @@ class TestDemoSimulateRoleInference:
             demo_dir.mkdir(exist_ok=True)
             return demo_dir
 
-        with patch("agents.demo.run_simulation", side_effect=mock_run_sim), \
-             patch("agents.demo.run_warmup", side_effect=mock_warmup), \
-             patch("agents.demo.generate_demo", side_effect=mock_generate_demo), \
-             patch("agents.demo.config"):
-
+        with (
+            patch("agents.demo.run_simulation", side_effect=mock_run_sim),
+            patch("agents.demo.run_warmup", side_effect=mock_warmup),
+            patch("agents.demo.generate_demo", side_effect=mock_generate_demo),
+            patch("agents.demo.config"),
+        ):
             await _run_simulated_demo(
                 request="show the VP of engineering dashboard",
                 role="tech-lead",
@@ -1105,11 +1153,12 @@ class TestDemoSimulateRoleInference:
 
         dossier_path = tmp_path / "custom-org.yaml"
 
-        with patch("agents.demo.run_simulation", side_effect=mock_run_sim), \
-             patch("agents.demo.run_warmup", side_effect=mock_warmup), \
-             patch("agents.demo.generate_demo", side_effect=mock_generate_demo), \
-             patch("agents.demo.config"):
-
+        with (
+            patch("agents.demo.run_simulation", side_effect=mock_run_sim),
+            patch("agents.demo.run_warmup", side_effect=mock_warmup),
+            patch("agents.demo.generate_demo", side_effect=mock_generate_demo),
+            patch("agents.demo.config"),
+        ):
             await _run_simulated_demo(
                 request="show the management cockpit",
                 window="5d",
@@ -1137,11 +1186,12 @@ class TestDemoSimulateRoleInference:
             demo_dir.mkdir(exist_ok=True)
             return demo_dir
 
-        with patch("agents.demo.run_simulation", side_effect=mock_run_sim), \
-             patch("agents.demo.run_warmup", side_effect=mock_warmup), \
-             patch("agents.demo.generate_demo", side_effect=mock_generate_demo), \
-             patch("agents.demo.config"):
-
+        with (
+            patch("agents.demo.run_simulation", side_effect=mock_run_sim),
+            patch("agents.demo.run_warmup", side_effect=mock_warmup),
+            patch("agents.demo.generate_demo", side_effect=mock_generate_demo),
+            patch("agents.demo.config"),
+        ):
             await _run_simulated_demo(
                 request="show the management cockpit",
                 window="5d",
@@ -1186,19 +1236,20 @@ async def _run_simulated_demo(
 Replace the hardcoded `role="engineering-manager"` in the `run_simulation()` call (line 1348-1355) with:
 
 ```python
-    resolved_role = infer_role(request, explicit_role=role)
-    log.info("Running temporal simulation (role=%s, window=%s, variant=%s)",
-             resolved_role, window, variant)
+resolved_role = infer_role(request, explicit_role=role)
+log.info(
+    "Running temporal simulation (role=%s, window=%s, variant=%s)", resolved_role, window, variant
+)
 
-    sim_dir = await run_simulation(
-        role=resolved_role,
-        variant=variant,
-        window=window,
-        seed="demo-data/",
-        scenario=scenario,
-        audience=audience,
-        org_dossier=org_dossier,
-    )
+sim_dir = await run_simulation(
+    role=resolved_role,
+    variant=variant,
+    window=window,
+    seed="demo-data/",
+    scenario=scenario,
+    audience=audience,
+    org_dossier=org_dossier,
+)
 ```
 
 - [ ] **Step 4: Add `--role` and `--org-dossier` CLI flags to demo.py**
@@ -1206,28 +1257,35 @@ Replace the hardcoded `role="engineering-manager"` in the `run_simulation()` cal
 In the argparse block, add after the `--simulate` flag (around line 1395):
 
 ```python
-    parser.add_argument("--role", type=str, default=None,
-                        help="Override role for simulation (tech-lead, vp-engineering, engineering-manager)")
-    parser.add_argument("--org-dossier", type=str, default=None,
-                        help="Path to org-dossier.yaml for simulation")
+parser.add_argument(
+    "--role",
+    type=str,
+    default=None,
+    help="Override role for simulation (tech-lead, vp-engineering, engineering-manager)",
+)
+parser.add_argument(
+    "--org-dossier", type=str, default=None, help="Path to org-dossier.yaml for simulation"
+)
 ```
 
 In the `if args.simulate:` branch (line 1438-1451), pass `role=args.role` to `_run_simulated_demo()`. Replace the full call with all kwargs shown explicitly:
 
 ```python
-        demo_dir = await _run_simulated_demo(
-            request=args.request if not args.audience else f"{parse_request(args.request)[0]} for {args.audience}",
-            role=args.role,
-            window=args.window,
-            variant=args.variant,
-            scenario=args.scenario,
-            audience=args.audience,
-            format=args.format,
-            duration=args.duration,
-            persona_file=args.persona_file,
-            voice=args.voice,
-            org_dossier=Path(args.org_dossier) if args.org_dossier else None,
-        )
+demo_dir = await _run_simulated_demo(
+    request=args.request
+    if not args.audience
+    else f"{parse_request(args.request)[0]} for {args.audience}",
+    role=args.role,
+    window=args.window,
+    variant=args.variant,
+    scenario=args.scenario,
+    audience=args.audience,
+    format=args.format,
+    duration=args.duration,
+    persona_file=args.persona_file,
+    voice=args.voice,
+    org_dossier=Path(args.org_dossier) if args.org_dossier else None,
+)
 ```
 
 - [ ] **Step 5: Run tests**

@@ -109,13 +109,14 @@ Zero LLM. Reads knowledge model, scans vault, produces gap list.
 @dataclass
 class KnowledgeGap:
     requirement_id: str
-    category: str           # foundational | structural | enrichment
-    priority: int           # nudge priority (90, 60, or 35)
+    category: str  # foundational | structural | enrichment
+    priority: int  # nudge priority (90, 60, or 35)
     description: str
-    acquisition_method: str # interview | nudge | external
+    acquisition_method: str  # interview | nudge | external
     interview_question: str | None
     depends_on: list[str]
     satisfied: bool
+
 
 @dataclass
 class SufficiencyReport:
@@ -148,13 +149,21 @@ def _collect_sufficiency_nudges(report: SufficiencyReport) -> list[Nudge]:
         # Check dependencies
         if any(dep not in satisfied_ids for dep in gap.depends_on):
             continue
-        nudges.append(Nudge(
-            source="knowledge-sufficiency",
-            priority=gap.priority,  # 90, 60, or 35
-            urgency="high" if gap.category == "foundational" else "medium" if gap.category == "structural" else "low",
-            text=f"Missing: {gap.description}",
-            action=f"/setup {gap.requirement_id}" if gap.acquisition_method == "interview" else f"Create {gap.description}",
-        ))
+        nudges.append(
+            Nudge(
+                source="knowledge-sufficiency",
+                priority=gap.priority,  # 90, 60, or 35
+                urgency="high"
+                if gap.category == "foundational"
+                else "medium"
+                if gap.category == "structural"
+                else "low",
+                text=f"Missing: {gap.description}",
+                action=f"/setup {gap.requirement_id}"
+                if gap.acquisition_method == "interview"
+                else f"Create {gap.description}",
+            )
+        )
     return nudges
 ```
 

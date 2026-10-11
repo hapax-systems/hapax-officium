@@ -36,6 +36,7 @@ In `tests/test_config.py`, add:
 def test_data_dir_default():
     """DATA_DIR defaults to data/ relative to project root."""
     from shared.config import DATA_DIR
+
     assert DATA_DIR.name == "data"
     assert DATA_DIR.parent.name == "ai-agents" or DATA_DIR.exists()
 
@@ -43,8 +44,10 @@ def test_data_dir_default():
 def test_data_dir_env_override(monkeypatch):
     """DATA_DIR respects HAPAX_DATA_DIR env var."""
     import importlib
+
     monkeypatch.setenv("HAPAX_DATA_DIR", "/tmp/test-data")
     import shared.config as cfg
+
     importlib.reload(cfg)
     assert str(cfg.DATA_DIR) == "/tmp/test-data"
     monkeypatch.delenv("HAPAX_DATA_DIR")
@@ -73,8 +76,9 @@ data/**/*.yaml
 After `PROFILES_DIR` (line 27), add:
 
 ```python
-DATA_DIR: Path = Path(os.environ.get("HAPAX_DATA_DIR",
-    str(Path(__file__).resolve().parent.parent / "data")))
+DATA_DIR: Path = Path(
+    os.environ.get("HAPAX_DATA_DIR", str(Path(__file__).resolve().parent.parent / "data"))
+)
 ```
 
 **Step 5: Run tests to verify they pass**
@@ -105,6 +109,7 @@ Replace the current stub tests in `tests/test_management.py` with tests that ver
 
 ```python
 """Tests for cockpit.data.management — reads from DATA_DIR."""
+
 from __future__ import annotations
 import textwrap
 from pathlib import Path
@@ -148,13 +153,16 @@ class TestParseFrontmatter:
 
 class TestCollectPeople:
     def test_reads_person_files(self, tmp_path):
-        _write_md(tmp_path / "people" / "alice.md", textwrap.dedent("""\
+        _write_md(
+            tmp_path / "people" / "alice.md",
+            textwrap.dedent("""\
             type: person
             name: Alice
             status: active
             role: direct-report
             team: Platform
-            cadence: weekly"""))
+            cadence: weekly"""),
+        )
         with patch("cockpit.data.management.DATA_DIR", tmp_path):
             snap = collect_management_state()
         assert len(snap.people) == 1
@@ -177,11 +185,14 @@ class TestCollectPeople:
 
 class TestCollectCoaching:
     def test_reads_coaching_files(self, tmp_path):
-        _write_md(tmp_path / "coaching" / "alice-growth.md", textwrap.dedent("""\
+        _write_md(
+            tmp_path / "coaching" / "alice-growth.md",
+            textwrap.dedent("""\
             type: coaching
             person: Alice
             status: active
-            check-in-by: 2026-03-15"""))
+            check-in-by: 2026-03-15"""),
+        )
         (tmp_path / "people").mkdir()
         with patch("cockpit.data.management.DATA_DIR", tmp_path):
             snap = collect_management_state()
@@ -191,13 +202,16 @@ class TestCollectCoaching:
 
 class TestCollectFeedback:
     def test_reads_feedback_files(self, tmp_path):
-        _write_md(tmp_path / "feedback" / "alice-code-review.md", textwrap.dedent("""\
+        _write_md(
+            tmp_path / "feedback" / "alice-code-review.md",
+            textwrap.dedent("""\
             type: feedback
             person: Alice
             direction: giving
             category: technical
             follow-up-by: 2026-03-20
-            followed-up: false"""))
+            followed-up: false"""),
+        )
         (tmp_path / "people").mkdir()
         (tmp_path / "coaching").mkdir()
         with patch("cockpit.data.management.DATA_DIR", tmp_path):
@@ -209,24 +223,33 @@ class TestCollectFeedback:
 
 class TestSnapshotAggregates:
     def test_computes_staleness_counts(self, tmp_path):
-        _write_md(tmp_path / "people" / "alice.md", textwrap.dedent("""\
+        _write_md(
+            tmp_path / "people" / "alice.md",
+            textwrap.dedent("""\
             type: person
             name: Alice
             status: active
             cadence: weekly
-            last-1on1: 2026-02-01"""))
-        _write_md(tmp_path / "coaching" / "alice-h.md", textwrap.dedent("""\
+            last-1on1: 2026-02-01"""),
+        )
+        _write_md(
+            tmp_path / "coaching" / "alice-h.md",
+            textwrap.dedent("""\
             type: coaching
             person: Alice
             status: active
-            check-in-by: 2026-02-01"""))
-        _write_md(tmp_path / "feedback" / "alice-fb.md", textwrap.dedent("""\
+            check-in-by: 2026-02-01"""),
+        )
+        _write_md(
+            tmp_path / "feedback" / "alice-fb.md",
+            textwrap.dedent("""\
             type: feedback
             person: Alice
             direction: giving
             category: technical
             follow-up-by: 2026-02-01
-            followed-up: false"""))
+            followed-up: false"""),
+        )
         with patch("cockpit.data.management.DATA_DIR", tmp_path):
             snap = collect_management_state()
         assert snap.stale_1on1_count >= 1
@@ -261,6 +284,7 @@ Rewrite `logos/data/management.py` to scan `DATA_DIR`:
 Reads structured markdown files with YAML frontmatter from DATA_DIR
 subdirectories (people/, coaching/, feedback/, meetings/).
 """
+
 from __future__ import annotations
 
 import logging
@@ -297,6 +321,7 @@ def _parse_frontmatter(path: Path) -> tuple[dict, str]:
 
 
 # ── Dataclasses ───────────────────────────────────────────────────────────────
+
 
 @dataclass
 class PersonState:
@@ -381,6 +406,7 @@ def _compute_1on1_staleness(person: PersonState) -> None:
 
 # ── Collectors ────────────────────────────────────────────────────────────────
 
+
 def _collect_people() -> list[PersonState]:
     people_dir = DATA_DIR / "people"
     if not people_dir.is_dir():
@@ -437,15 +463,17 @@ def _collect_coaching() -> list[CoachingState]:
                 overdue = days_overdue > 0
             except ValueError:
                 pass
-        result.append(CoachingState(
-            title=meta.get("title", f.stem.replace("-", " ").title()),
-            person=str(meta.get("person", "")),
-            status=str(meta.get("status", "active")),
-            check_in_by=check_in,
-            overdue=overdue,
-            days_overdue=max(0, days_overdue),
-            file_path=str(f),
-        ))
+        result.append(
+            CoachingState(
+                title=meta.get("title", f.stem.replace("-", " ").title()),
+                person=str(meta.get("person", "")),
+                status=str(meta.get("status", "active")),
+                check_in_by=check_in,
+                overdue=overdue,
+                days_overdue=max(0, days_overdue),
+                file_path=str(f),
+            )
+        )
     return result
 
 
@@ -469,21 +497,24 @@ def _collect_feedback() -> list[FeedbackState]:
                 overdue = days_overdue > 0
             except ValueError:
                 pass
-        result.append(FeedbackState(
-            title=meta.get("title", f.stem.replace("-", " ").title()),
-            person=str(meta.get("person", "")),
-            direction=str(meta.get("direction", "")),
-            category=str(meta.get("category", "")),
-            follow_up_by=follow_up,
-            followed_up=followed_up,
-            overdue=overdue,
-            days_overdue=max(0, days_overdue),
-            file_path=str(f),
-        ))
+        result.append(
+            FeedbackState(
+                title=meta.get("title", f.stem.replace("-", " ").title()),
+                person=str(meta.get("person", "")),
+                direction=str(meta.get("direction", "")),
+                category=str(meta.get("category", "")),
+                follow_up_by=follow_up,
+                followed_up=followed_up,
+                overdue=overdue,
+                days_overdue=max(0, days_overdue),
+                file_path=str(f),
+            )
+        )
     return result
 
 
 # ── Main entry point ──────────────────────────────────────────────────────────
+
 
 def collect_management_state() -> ManagementSnapshot:
     """Scan DATA_DIR subdirectories and build a complete management snapshot."""
@@ -534,6 +565,7 @@ git commit -m "feat: rehydrate management collector to read from DATA_DIR"
 
 ```python
 """Tests for shared.management_bridge — generates profile facts from DATA_DIR."""
+
 from __future__ import annotations
 from pathlib import Path
 from unittest.mock import patch
@@ -548,8 +580,10 @@ def _write_md(path: Path, frontmatter: str, body: str = "") -> None:
 
 class TestGenerateFacts:
     def test_people_facts(self, tmp_path):
-        _write_md(tmp_path / "people" / "alice.md",
-                  "type: person\nname: Alice\nstatus: active\nteam: Platform\nrole: senior")
+        _write_md(
+            tmp_path / "people" / "alice.md",
+            "type: person\nname: Alice\nstatus: active\nteam: Platform\nrole: senior",
+        )
         with patch("shared.management_bridge.DATA_DIR", tmp_path):
             facts = generate_facts()
         people_facts = [f for f in facts if f["dimension"] == "team_leadership"]
@@ -557,8 +591,10 @@ class TestGenerateFacts:
         assert any("Alice" in f["text"] for f in people_facts)
 
     def test_coaching_facts(self, tmp_path):
-        _write_md(tmp_path / "coaching" / "alice-growth.md",
-                  "type: coaching\nperson: Alice\nstatus: active")
+        _write_md(
+            tmp_path / "coaching" / "alice-growth.md",
+            "type: coaching\nperson: Alice\nstatus: active",
+        )
         (tmp_path / "people").mkdir(exist_ok=True)
         (tmp_path / "feedback").mkdir(exist_ok=True)
         (tmp_path / "meetings").mkdir(exist_ok=True)
@@ -575,8 +611,7 @@ class TestGenerateFacts:
         assert facts == []
 
     def test_returns_list_of_dicts(self, tmp_path):
-        _write_md(tmp_path / "people" / "bob.md",
-                  "type: person\nname: Bob\nstatus: active")
+        _write_md(tmp_path / "people" / "bob.md", "type: person\nname: Bob\nstatus: active")
         with patch("shared.management_bridge.DATA_DIR", tmp_path):
             facts = generate_facts()
         for f in facts:
@@ -600,6 +635,7 @@ class TestSaveFacts:
             path = save_facts([{"text": "test", "dimension": "d", "source": "s"}])
         assert path.exists()
         import json
+
         data = json.loads(path.read_text())
         assert len(data) == 1
 ```
@@ -619,6 +655,7 @@ Rehydrate `shared/management_bridge.py`:
 Reads structured markdown from DATA_DIR to generate profile-compatible
 facts for the management profiler and other consumers.
 """
+
 from __future__ import annotations
 
 import json
@@ -673,14 +710,22 @@ def _people_facts() -> list[dict]:
         team = meta.get("team", "")
         role = meta.get("role", "")
         if team:
-            facts.append(_make_fact(
-                f"{name} is on {team} team (role: {role})",
-                "team_leadership", f"data/people/{f.name}"))
+            facts.append(
+                _make_fact(
+                    f"{name} is on {team} team (role: {role})",
+                    "team_leadership",
+                    f"data/people/{f.name}",
+                )
+            )
         cadence = meta.get("cadence", "")
         if cadence:
-            facts.append(_make_fact(
-                f"1:1 cadence with {name}: {cadence}",
-                "management_practice", f"data/people/{f.name}"))
+            facts.append(
+                _make_fact(
+                    f"1:1 cadence with {name}: {cadence}",
+                    "management_practice",
+                    f"data/people/{f.name}",
+                )
+            )
     return facts
 
 
@@ -696,9 +741,13 @@ def _coaching_facts() -> list[dict]:
         person = meta.get("person", "")
         status = meta.get("status", "")
         title = meta.get("title", f.stem.replace("-", " ").title())
-        facts.append(_make_fact(
-            f"Coaching hypothesis for {person}: {title} (status: {status})",
-            "management_practice", f"data/coaching/{f.name}"))
+        facts.append(
+            _make_fact(
+                f"Coaching hypothesis for {person}: {title} (status: {status})",
+                "management_practice",
+                f"data/coaching/{f.name}",
+            )
+        )
     return facts
 
 
@@ -714,9 +763,13 @@ def _feedback_facts() -> list[dict]:
         person = meta.get("person", "")
         direction = meta.get("direction", "")
         category = meta.get("category", "")
-        facts.append(_make_fact(
-            f"Feedback record ({direction}) for {person}: {category}",
-            "management_practice", f"data/feedback/{f.name}"))
+        facts.append(
+            _make_fact(
+                f"Feedback record ({direction}) for {person}: {category}",
+                "management_practice",
+                f"data/feedback/{f.name}",
+            )
+        )
     return facts
 
 
@@ -731,9 +784,13 @@ def _meeting_facts() -> list[dict]:
             continue
         title = meta.get("title", f.stem.replace("-", " ").title())
         meeting_date = meta.get("date", "")
-        facts.append(_make_fact(
-            f"Meeting: {title} ({meeting_date})",
-            "attention_distribution", f"data/meetings/{f.name}"))
+        facts.append(
+            _make_fact(
+                f"Meeting: {title} ({meeting_date})",
+                "attention_distribution",
+                f"data/meetings/{f.name}",
+            )
+        )
     return facts
 
 
@@ -790,6 +847,7 @@ Rename to `data_writer.py` since it no longer writes to a vault.
 
 ```python
 """Tests for shared.vault_writer — writes management data to DATA_DIR."""
+
 from __future__ import annotations
 from pathlib import Path
 from unittest.mock import patch
@@ -809,8 +867,9 @@ from shared.vault_writer import (
 class TestWriteToVault:
     def test_creates_file_with_frontmatter(self, tmp_path):
         with patch("shared.vault_writer.DATA_DIR", tmp_path):
-            result = write_to_vault("people", "alice.md", "# Alice",
-                                    frontmatter={"type": "person", "name": "Alice"})
+            result = write_to_vault(
+                "people", "alice.md", "# Alice", frontmatter={"type": "person", "name": "Alice"}
+            )
         assert result is not None
         assert result.exists()
         content = result.read_text()
@@ -888,6 +947,7 @@ Expected: FAIL (all functions return `None`)
 Retained name for import compatibility. All writes target DATA_DIR
 subdirectories using structured markdown with YAML frontmatter.
 """
+
 from __future__ import annotations
 
 import logging
@@ -918,7 +978,9 @@ def _write_md(path: Path, content: str, frontmatter: dict | None = None) -> Path
 
 
 def write_to_vault(
-    folder: str, filename: str, content: str,
+    folder: str,
+    filename: str,
+    content: str,
     frontmatter: dict | None = None,
 ) -> Path | None:
     """Write a markdown file to DATA_DIR/folder/filename."""
@@ -1061,6 +1123,7 @@ git commit -m "feat: rehydrate vault_writer to write management data to DATA_DIR
 
 ```python
 """Tests for agents.ingest — document classifier and router."""
+
 from __future__ import annotations
 import textwrap
 from pathlib import Path
@@ -1206,6 +1269,7 @@ Usage:
     uv run python -m agents.ingest --type transcript <file>  # Skip classification
     uv run python -m agents.ingest --watch                   # Watch data/inbox/
 """
+
 from __future__ import annotations
 
 import argparse
@@ -1426,10 +1490,10 @@ async def _watch_inbox(poll_interval: float = 30.0) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Document ingestion pipeline")
     parser.add_argument("file", nargs="?", help="File to process")
-    parser.add_argument("--type", choices=[t.value for t in DocumentType],
-                        help="Skip classification, use this type")
-    parser.add_argument("--watch", action="store_true",
-                        help="Watch data/inbox/ for new files")
+    parser.add_argument(
+        "--type", choices=[t.value for t in DocumentType], help="Skip classification, use this type"
+    )
+    parser.add_argument("--watch", action="store_true", help="Watch data/inbox/ for new files")
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
@@ -1483,6 +1547,7 @@ git commit -m "feat: add document ingestion agent with classifier and router"
 
 ```python
 """Tests for agents.status_update — upward-facing status reports."""
+
 from __future__ import annotations
 from unittest.mock import patch, AsyncMock, MagicMock
 
@@ -1512,6 +1577,7 @@ class TestGatherWeekContext:
         (tmp_path / "people").mkdir()
         # Write a meeting from today
         from datetime import date
+
         today = date.today().isoformat()
         f = tmp_path / "meetings" / f"{today}-standup.md"
         f.write_text(f"---\ntype: meeting\ndate: {today}\n---\n# Standup")
@@ -1554,6 +1620,7 @@ Usage:
     uv run python -m agents.status_update --daily   # Daily
     uv run python -m agents.status_update --save    # Save to DATA_DIR
 """
+
 from __future__ import annotations
 
 import argparse
@@ -1653,8 +1720,7 @@ async def generate_status(days: int = 7, save: bool = False) -> StatusReport:
 
     period = "day" if days <= 1 else f"{days} days"
     result = await agent.run(
-        f"Generate a status report for the last {period}.\n\n"
-        + "\n".join(context_text)
+        f"Generate a status report for the last {period}.\n\n" + "\n".join(context_text)
     )
     report = result.output
 
@@ -1754,6 +1820,7 @@ git commit -m "feat: add status_update agent for upward-facing reports"
 
 ```python
 """Tests for agents.review_prep — performance review evidence aggregation."""
+
 from __future__ import annotations
 from pathlib import Path
 from unittest.mock import patch
@@ -1773,11 +1840,12 @@ def _write_md(path: Path, frontmatter: str, body: str = "") -> None:
 
 class TestGatherPersonEvidence:
     def test_collects_meetings(self, tmp_path):
-        _write_md(tmp_path / "meetings" / "m1.md",
-                  "type: meeting\ndate: 2026-03-01\nattendees:\n  - Alice",
-                  "Discussed project progress")
-        _write_md(tmp_path / "people" / "alice.md",
-                  "type: person\nname: Alice\nstatus: active")
+        _write_md(
+            tmp_path / "meetings" / "m1.md",
+            "type: meeting\ndate: 2026-03-01\nattendees:\n  - Alice",
+            "Discussed project progress",
+        )
+        _write_md(tmp_path / "people" / "alice.md", "type: person\nname: Alice\nstatus: active")
         (tmp_path / "coaching").mkdir()
         (tmp_path / "feedback").mkdir()
         with patch("agents.review_prep.DATA_DIR", tmp_path):
@@ -1785,9 +1853,11 @@ class TestGatherPersonEvidence:
         assert len(ev["meetings"]) >= 1
 
     def test_collects_coaching(self, tmp_path):
-        _write_md(tmp_path / "coaching" / "alice-growth.md",
-                  "type: coaching\nperson: Alice\nstatus: active",
-                  "Hypothesis: Strong ownership")
+        _write_md(
+            tmp_path / "coaching" / "alice-growth.md",
+            "type: coaching\nperson: Alice\nstatus: active",
+            "Hypothesis: Strong ownership",
+        )
         (tmp_path / "meetings").mkdir()
         (tmp_path / "feedback").mkdir()
         (tmp_path / "people").mkdir()
@@ -1796,9 +1866,11 @@ class TestGatherPersonEvidence:
         assert len(ev["coaching"]) >= 1
 
     def test_collects_feedback(self, tmp_path):
-        _write_md(tmp_path / "feedback" / "alice-review.md",
-                  "type: feedback\nperson: Alice\ndirection: giving",
-                  "Great code review")
+        _write_md(
+            tmp_path / "feedback" / "alice-review.md",
+            "type: feedback\nperson: Alice\ndirection: giving",
+            "Great code review",
+        )
         (tmp_path / "meetings").mkdir()
         (tmp_path / "coaching").mkdir()
         (tmp_path / "people").mkdir()
@@ -2157,6 +2229,7 @@ git commit -m "feat: mount data directory into cockpit container"
 
 ```python
 """Integration test: data files → management collector → nudges → API cache."""
+
 from __future__ import annotations
 import textwrap
 from pathlib import Path
@@ -2181,7 +2254,9 @@ def _write_md(path: Path, frontmatter: str, body: str = "") -> None:
 
 def _setup_data(tmp_path: Path) -> None:
     """Create a minimal but complete data directory."""
-    _write_md(tmp_path / "people" / "alice.md", textwrap.dedent("""\
+    _write_md(
+        tmp_path / "people" / "alice.md",
+        textwrap.dedent("""\
         type: person
         name: Alice
         status: active
@@ -2189,26 +2264,36 @@ def _setup_data(tmp_path: Path) -> None:
         role: direct-report
         cadence: weekly
         last-1on1: 2026-02-01
-        cognitive-load: high"""))
-    _write_md(tmp_path / "people" / "bob.md", textwrap.dedent("""\
+        cognitive-load: high"""),
+    )
+    _write_md(
+        tmp_path / "people" / "bob.md",
+        textwrap.dedent("""\
         type: person
         name: Bob
         status: active
         team: Platform
         role: direct-report
-        cadence: biweekly"""))
-    _write_md(tmp_path / "coaching" / "alice-ownership.md", textwrap.dedent("""\
+        cadence: biweekly"""),
+    )
+    _write_md(
+        tmp_path / "coaching" / "alice-ownership.md",
+        textwrap.dedent("""\
         type: coaching
         person: Alice
         status: active
-        check-in-by: 2026-02-15"""))
-    _write_md(tmp_path / "feedback" / "bob-review.md", textwrap.dedent("""\
+        check-in-by: 2026-02-15"""),
+    )
+    _write_md(
+        tmp_path / "feedback" / "bob-review.md",
+        textwrap.dedent("""\
         type: feedback
         person: Bob
         direction: giving
         category: technical
         follow-up-by: 2026-02-20
-        followed-up: false"""))
+        followed-up: false"""),
+    )
     for d in ("meetings", "decisions", "references", "inbox", "processed"):
         (tmp_path / d).mkdir(exist_ok=True)
 

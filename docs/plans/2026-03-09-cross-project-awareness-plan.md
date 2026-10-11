@@ -262,43 +262,53 @@ def check_cross_project_boundary() -> list[DriftItem]:
     Any divergence is high-severity.
     """
     items: list[DriftItem] = []
-    hapaxromana_path = Path.home() / "projects" / "hapaxromana" / "docs" / "cross-project-boundary.md"
-    containerization_path = Path.home() / "projects" / "hapax-containerization" / "docs" / "cross-project-boundary.md"
+    hapaxromana_path = (
+        Path.home() / "projects" / "hapaxromana" / "docs" / "cross-project-boundary.md"
+    )
+    containerization_path = (
+        Path.home() / "projects" / "hapax-containerization" / "docs" / "cross-project-boundary.md"
+    )
 
     if not hapaxromana_path.exists():
-        items.append(DriftItem(
-            severity="high",
-            category="missing_doc",
-            doc_file=str(hapaxromana_path),
-            doc_claim="Cross-project boundary document should exist",
-            reality="File not found",
-            suggestion=f"Copy from {containerization_path}",
-        ))
+        items.append(
+            DriftItem(
+                severity="high",
+                category="missing_doc",
+                doc_file=str(hapaxromana_path),
+                doc_claim="Cross-project boundary document should exist",
+                reality="File not found",
+                suggestion=f"Copy from {containerization_path}",
+            )
+        )
         return items
 
     if not containerization_path.exists():
-        items.append(DriftItem(
-            severity="high",
-            category="missing_doc",
-            doc_file=str(containerization_path),
-            doc_claim="Cross-project boundary document should exist",
-            reality="File not found",
-            suggestion=f"Copy from {hapaxromana_path}",
-        ))
+        items.append(
+            DriftItem(
+                severity="high",
+                category="missing_doc",
+                doc_file=str(containerization_path),
+                doc_claim="Cross-project boundary document should exist",
+                reality="File not found",
+                suggestion=f"Copy from {hapaxromana_path}",
+            )
+        )
         return items
 
     hapaxromana_content = hapaxromana_path.read_bytes()
     containerization_content = containerization_path.read_bytes()
 
     if hapaxromana_content != containerization_content:
-        items.append(DriftItem(
-            severity="high",
-            category="config_mismatch",
-            doc_file="docs/cross-project-boundary.md",
-            doc_claim="Boundary document must be byte-identical in both repos",
-            reality="Files differ between hapaxromana and hapax-containerization",
-            suggestion="Diff the two files, reconcile changes, and copy the updated version to both repos",
-        ))
+        items.append(
+            DriftItem(
+                severity="high",
+                category="config_mismatch",
+                doc_file="docs/cross-project-boundary.md",
+                doc_claim="Boundary document must be byte-identical in both repos",
+                reality="Files differ between hapaxromana and hapax-containerization",
+                suggestion="Diff the two files, reconcile changes, and copy the updated version to both repos",
+            )
+        )
 
     return items
 ```

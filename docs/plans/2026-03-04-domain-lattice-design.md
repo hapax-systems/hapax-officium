@@ -195,13 +195,13 @@ Combines into a per-domain summary:
 @dataclass
 class MomentumVector:
     domain_id: str
-    direction: str      # accelerating | steady | decelerating | dormant
-    regularity: str     # regular | irregular | sporadic
-    alignment: str      # improving | plateaued | regressing
+    direction: str  # accelerating | steady | decelerating | dormant
+    regularity: str  # regular | irregular | sporadic
+    alignment: str  # improving | plateaued | regressing
     activity_rate: float
     regularity_cv: float
     alignment_slope: float
-    computed_at: str    # ISO timestamp
+    computed_at: str  # ISO timestamp
 ```
 
 ### Activity Sources

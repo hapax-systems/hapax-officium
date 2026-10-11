@@ -110,21 +110,23 @@ class DemoEvalResult(BaseModel):
 
 ```python
 """Tests for demo evaluation data models."""
+
 from agents.demo_models import DemoEvalDimension, DemoEvalReport, DemoEvalResult
 
 
 class TestDemoEvalDimension:
     def test_basic_creation(self):
-        dim = DemoEvalDimension(
-            name="style_compliance", category="text", passed=True, score=0.9
-        )
+        dim = DemoEvalDimension(name="style_compliance", category="text", passed=True, score=0.9)
         assert dim.name == "style_compliance"
         assert dim.category == "text"
         assert dim.passed is True
 
     def test_with_issues(self):
         dim = DemoEvalDimension(
-            name="visual_clarity", category="visual", passed=False, score=0.3,
+            name="visual_clarity",
+            category="visual",
+            passed=False,
+            score=0.3,
             issues=["Screenshot shows loading spinner", "Text too small to read"],
             evidence="Scene 2 screenshot captured during page load",
         )
@@ -133,6 +135,7 @@ class TestDemoEvalDimension:
 
     def test_score_bounds(self):
         import pytest
+
         with pytest.raises(Exception):
             DemoEvalDimension(name="x", category="text", passed=True, score=1.5)
 
@@ -144,14 +147,20 @@ class TestDemoEvalReport:
             DemoEvalDimension(name="clarity", category="visual", passed=True, score=0.8),
         ]
         report = DemoEvalReport(
-            dimensions=dims, overall_pass=True, overall_score=0.85, iteration=1,
+            dimensions=dims,
+            overall_pass=True,
+            overall_score=0.85,
+            iteration=1,
         )
         assert report.overall_pass is True
         assert report.iteration == 1
 
     def test_with_adjustments(self):
         report = DemoEvalReport(
-            dimensions=[], overall_pass=False, overall_score=0.4, iteration=2,
+            dimensions=[],
+            overall_pass=False,
+            overall_score=0.4,
+            iteration=2,
             adjustments_applied=["Added explicit style avoidance list"],
         )
         assert len(report.adjustments_applied) == 1
@@ -160,11 +169,17 @@ class TestDemoEvalReport:
 class TestDemoEvalResult:
     def test_successful_result(self):
         report = DemoEvalReport(
-            dimensions=[], overall_pass=True, overall_score=0.9, iteration=1,
+            dimensions=[],
+            overall_pass=True,
+            overall_score=0.9,
+            iteration=1,
         )
         result = DemoEvalResult(
-            scenario="the system for a family member", passed=True, iterations=1,
-            final_report=report, demo_dir="/tmp/demo",
+            scenario="the system for a family member",
+            passed=True,
+            iterations=1,
+            final_report=report,
+            demo_dir="/tmp/demo",
             total_duration_seconds=45.0,
         )
         assert result.passed is True
@@ -174,8 +189,12 @@ class TestDemoEvalResult:
         r1 = DemoEvalReport(dimensions=[], overall_pass=False, overall_score=0.4, iteration=1)
         r2 = DemoEvalReport(dimensions=[], overall_pass=True, overall_score=0.85, iteration=2)
         result = DemoEvalResult(
-            scenario="test", passed=True, iterations=2,
-            final_report=r2, history=[r1, r2], demo_dir="/tmp/demo",
+            scenario="test",
+            passed=True,
+            iterations=2,
+            final_report=r2,
+            history=[r1, r2],
+            demo_dir="/tmp/demo",
         )
         assert len(result.history) == 2
 ```
@@ -198,6 +217,7 @@ class TestDemoEvalResult:
 
 ```python
 """Evaluation rubrics for demo output quality — deterministic structural checks."""
+
 from __future__ import annotations
 
 import json
@@ -233,20 +253,28 @@ def check_files_present(demo_dir: Path) -> DemoEvalDimension:
 
     passed = len(issues) == 0
     return DemoEvalDimension(
-        name="files_present", category="structural",
-        passed=passed, score=1.0 if passed else 0.0, issues=issues,
+        name="files_present",
+        category="structural",
+        passed=passed,
+        score=1.0 if passed else 0.0,
+        issues=issues,
     )
 
 
-def check_metadata_correctness(demo_dir: Path, expected_audience: str | None = None) -> DemoEvalDimension:
+def check_metadata_correctness(
+    demo_dir: Path, expected_audience: str | None = None
+) -> DemoEvalDimension:
     """Verify metadata.json has correct values."""
     issues = []
     meta_path = demo_dir / "metadata.json"
 
     if not meta_path.exists():
         return DemoEvalDimension(
-            name="metadata_correctness", category="structural",
-            passed=False, score=0.0, issues=["metadata.json not found"],
+            name="metadata_correctness",
+            category="structural",
+            passed=False,
+            score=0.0,
+            issues=["metadata.json not found"],
         )
 
     meta = json.loads(meta_path.read_text())
@@ -259,14 +287,18 @@ def check_metadata_correctness(demo_dir: Path, expected_audience: str | None = N
 
     # Audience match
     if expected_audience and meta.get("audience") != expected_audience:
-        issues.append(f"Audience mismatch: expected '{expected_audience}', got '{meta.get('audience')}'")
+        issues.append(
+            f"Audience mismatch: expected '{expected_audience}', got '{meta.get('audience')}'"
+        )
 
     # Scene count matches script
     script_path = demo_dir / "script.json"
     if script_path.exists():
         script = json.loads(script_path.read_text())
         if meta.get("scenes") != len(script.get("scenes", [])):
-            issues.append(f"Scene count mismatch: metadata={meta.get('scenes')}, script={len(script.get('scenes', []))}")
+            issues.append(
+                f"Scene count mismatch: metadata={meta.get('scenes')}, script={len(script.get('scenes', []))}"
+            )
 
     # Duration sanity
     duration = meta.get("duration", 0)
@@ -279,8 +311,11 @@ def check_metadata_correctness(demo_dir: Path, expected_audience: str | None = N
 
     passed = len(issues) == 0
     return DemoEvalDimension(
-        name="metadata_correctness", category="structural",
-        passed=passed, score=max(0.0, 1.0 - len(issues) * 0.25), issues=issues,
+        name="metadata_correctness",
+        category="structural",
+        passed=passed,
+        score=max(0.0, 1.0 - len(issues) * 0.25),
+        issues=issues,
     )
 
 
@@ -291,8 +326,11 @@ def check_html_integrity(demo_dir: Path) -> DemoEvalDimension:
 
     if not html_path.exists():
         return DemoEvalDimension(
-            name="html_integrity", category="structural",
-            passed=False, score=0.0, issues=["demo.html not found"],
+            name="html_integrity",
+            category="structural",
+            passed=False,
+            score=0.0,
+            issues=["demo.html not found"],
         )
 
     html = html_path.read_text()
@@ -320,13 +358,17 @@ def check_html_integrity(demo_dir: Path) -> DemoEvalDimension:
 
     passed = len(issues) == 0
     return DemoEvalDimension(
-        name="html_integrity", category="structural",
-        passed=passed, score=max(0.0, 1.0 - len(issues) * 0.2), issues=issues,
+        name="html_integrity",
+        category="structural",
+        passed=passed,
+        score=max(0.0, 1.0 - len(issues) * 0.2),
+        issues=issues,
     )
 
 
 def run_structural_checks(
-    demo_dir: Path, expected_audience: str | None = None,
+    demo_dir: Path,
+    expected_audience: str | None = None,
 ) -> list[DemoEvalDimension]:
     """Run all deterministic structural checks."""
     return [
@@ -340,6 +382,7 @@ def run_structural_checks(
 
 ```python
 """Tests for demo evaluation structural rubrics."""
+
 import json
 from pathlib import Path
 
@@ -366,9 +409,13 @@ def _make_demo_dir(tmp_path: Path, scenes: int = 3) -> Path:
         "title": "Test Demo",
         "audience": "family",
         "scenes": [
-            {"title": f"Scene {i}", "narration": f"Narration {i}",
-             "duration_hint": 10.0, "key_points": [f"Point {i}"],
-             "screenshot": {"url": "http://localhost:5173"}}
+            {
+                "title": f"Scene {i}",
+                "narration": f"Narration {i}",
+                "duration_hint": 10.0,
+                "key_points": [f"Point {i}"],
+                "screenshot": {"url": "http://localhost:5173"},
+            }
             for i in range(1, scenes + 1)
         ],
         "intro_narration": "Welcome.",
@@ -378,11 +425,19 @@ def _make_demo_dir(tmp_path: Path, scenes: int = 3) -> Path:
 
     # Metadata
     metadata = {
-        "title": "Test Demo", "audience": "family", "scope": "the system",
-        "scenes": scenes, "format": "slides", "duration": 30.0,
-        "timestamp": "20260305-120000", "output_dir": str(demo_dir),
-        "primary_file": "demo.html", "has_video": False, "has_audio": False,
-        "target_duration": 180, "quality_pass": True,
+        "title": "Test Demo",
+        "audience": "family",
+        "scope": "the system",
+        "scenes": scenes,
+        "format": "slides",
+        "duration": 30.0,
+        "timestamp": "20260305-120000",
+        "output_dir": str(demo_dir),
+        "primary_file": "demo.html",
+        "has_video": False,
+        "has_audio": False,
+        "target_duration": 180,
+        "quality_pass": True,
         "narrative_framework": "guided-tour",
     }
     (demo_dir / "metadata.json").write_text(json.dumps(metadata))
@@ -395,7 +450,7 @@ def _make_demo_dir(tmp_path: Path, scenes: int = 3) -> Path:
     # HTML player (minimal)
     html = f"""<!DOCTYPE html>
 <html><body style="background:#282828;color:#ebdbb2">
-<div id="app">{''.join(f'<div class="slide">{s["title"]}</div>' for s in script["scenes"])}
+<div id="app">{"".join(f'<div class="slide">{s["title"]}</div>' for s in script["scenes"])}
 <img src="data:image/png;base64,iVBOR"/>
 <button>play</button>
 </div></body></html>"""
@@ -515,8 +570,10 @@ from shared.config import get_model
 
 # ── Text evaluation models ──────────────────────────────────────────────────
 
+
 class TextEvalOutput(BaseModel):
     """Structured output from text evaluation LLM."""
+
     style_compliance: DimScore
     audience_calibration: DimScore
     duration_feasibility: DimScore
@@ -526,6 +583,7 @@ class TextEvalOutput(BaseModel):
 
 class DimScore(BaseModel):
     """Score for a single text dimension."""
+
     score: float = Field(ge=0.0, le=1.0)
     passed: bool
     issues: list[str] = Field(default_factory=list)
@@ -565,28 +623,28 @@ def _build_text_eval_prompt(script_data: dict, style_guide: dict, target_seconds
 
 ## Narration Text
 
-Intro: {script_data.get('intro_narration', '')}
+Intro: {script_data.get("intro_narration", "")}
 
 {chr(10).join(narrations)}
 
-Outro: {script_data.get('outro_narration', '')}
+Outro: {script_data.get("outro_narration", "")}
 
 ## Key Points (all scenes)
-{chr(10).join(f'- {kp}' for kp in key_points_all)}
+{chr(10).join(f"- {kp}" for kp in key_points_all)}
 
 ## Evaluation Criteria
 
 ### 1. style_compliance
-Voice should be: {style_guide.get('voice', 'first-person')}
-Cadence should be: {style_guide.get('cadence', 'state-explain-show')}
-Transitions should be: {style_guide.get('transitions', 'functional')}
-MUST AVOID: {'; '.join(avoid_items)}
-SHOULD EMBRACE: {'; '.join(embrace_items)}
-Opening rule: {style_guide.get('opening', '')}
-Closing rule: {style_guide.get('closing', '')}
+Voice should be: {style_guide.get("voice", "first-person")}
+Cadence should be: {style_guide.get("cadence", "state-explain-show")}
+Transitions should be: {style_guide.get("transitions", "functional")}
+MUST AVOID: {"; ".join(avoid_items)}
+SHOULD EMBRACE: {"; ".join(embrace_items)}
+Opening rule: {style_guide.get("opening", "")}
+Closing rule: {style_guide.get("closing", "")}
 
 ### 2. audience_calibration
-Target audience: {script_data.get('audience', 'unknown')}
+Target audience: {script_data.get("audience", "unknown")}
 Family audience = no technical jargon, warm, accessible.
 Technical audience = precise terminology, design rationale.
 
@@ -609,7 +667,9 @@ For each dimension: score 0.0-1.0 (0.8+ = pass), list specific issues with evide
 
 
 async def run_text_evaluation(
-    script_data: dict, style_guide: dict, target_seconds: int,
+    script_data: dict,
+    style_guide: dict,
+    target_seconds: int,
 ) -> list[DemoEvalDimension]:
     """Run LLM-based text quality evaluation on script narration."""
     prompt = _build_text_eval_prompt(script_data, style_guide, target_seconds)
@@ -617,14 +677,24 @@ async def run_text_evaluation(
     output = result.output
 
     dimensions = []
-    for name in ["style_compliance", "audience_calibration", "duration_feasibility",
-                  "key_points_quality", "narrative_coherence"]:
+    for name in [
+        "style_compliance",
+        "audience_calibration",
+        "duration_feasibility",
+        "key_points_quality",
+        "narrative_coherence",
+    ]:
         dim_score: DimScore = getattr(output, name)
-        dimensions.append(DemoEvalDimension(
-            name=name, category="text",
-            passed=dim_score.passed, score=dim_score.score,
-            issues=dim_score.issues, evidence=dim_score.evidence,
-        ))
+        dimensions.append(
+            DemoEvalDimension(
+                name=name,
+                category="text",
+                passed=dim_score.passed,
+                score=dim_score.score,
+                issues=dim_score.issues,
+                evidence=dim_score.evidence,
+            )
+        )
     return dimensions
 ```
 
@@ -653,7 +723,11 @@ class TestBuildTextEvalPrompt:
                 {"title": "Scene 1", "narration": "This is scene one.", "key_points": ["Point A"]},
             ],
         }
-        style_guide = {"voice": "first-person", "avoid": ["leverage"], "embrace": ["concrete numbers"]}
+        style_guide = {
+            "voice": "first-person",
+            "avoid": ["leverage"],
+            "embrace": ["concrete numbers"],
+        }
         prompt = _build_text_eval_prompt(script_data, style_guide, 180)
         assert "Welcome to the system" in prompt
         assert "scene one" in prompt
@@ -689,7 +763,8 @@ class TestRunTextEvaluation:
             mock_agent.run = AsyncMock(return_value=mock_result)
             dims = await run_text_evaluation(
                 {"audience": "family", "scenes": [], "intro_narration": "", "outro_narration": ""},
-                {}, 180,
+                {},
+                180,
             )
 
         assert len(dims) == 5
@@ -725,6 +800,7 @@ from pydantic_ai.messages import BinaryContent
 
 class VisualEvalOutput(BaseModel):
     """Structured output from visual evaluation LLM."""
+
     visual_clarity: DimScore
     visual_variety: DimScore
     theme_compliance: DimScore
@@ -745,7 +821,8 @@ visual_eval_agent = Agent(
 
 
 def _load_screenshots_as_content(
-    demo_dir: Path, script_data: dict,
+    demo_dir: Path,
+    script_data: dict,
 ) -> list[str | BinaryContent]:
     """Load screenshots and interleave with narration text for the vision prompt."""
     content: list[str | BinaryContent] = []
@@ -756,14 +833,18 @@ def _load_screenshots_as_content(
         pattern = f"{i:02d}-*.png"
         matches = list(screenshots_dir.glob(pattern))
         if not matches:
-            content.append(f"\n--- Scene {i}: {scene['title']} ---\n[Screenshot missing]\nNarration: {scene['narration']}\n")
+            content.append(
+                f"\n--- Scene {i}: {scene['title']} ---\n[Screenshot missing]\nNarration: {scene['narration']}\n"
+            )
             continue
 
         screenshot_path = matches[0]
         image_bytes = screenshot_path.read_bytes()
         image = BinaryContent(data=image_bytes, media_type="image/png")
 
-        content.append(f"\n--- Scene {i}: {scene['title']} ---\nNarration: {scene['narration']}\nKey points: {', '.join(scene.get('key_points', []))}\n")
+        content.append(
+            f"\n--- Scene {i}: {scene['title']} ---\nNarration: {scene['narration']}\nKey points: {', '.join(scene.get('key_points', []))}\n"
+        )
         content.append(image)
 
     return content
@@ -773,7 +854,7 @@ def _build_visual_eval_prompt(script_data: dict) -> str:
     """Build the text portion of the visual evaluation prompt."""
     return f"""Evaluate the visual quality of these demo screenshots.
 
-The demo is titled "{script_data.get('title', 'Unknown')}" for a {script_data.get('audience', 'unknown')} audience.
+The demo is titled "{script_data.get("title", "Unknown")}" for a {script_data.get("audience", "unknown")} audience.
 
 ## Evaluation Criteria
 
@@ -802,7 +883,8 @@ Score each dimension 0.0-1.0 (0.8+ = pass). Cite specific scenes for any issues.
 
 
 async def run_visual_evaluation(
-    demo_dir: Path, script_data: dict,
+    demo_dir: Path,
+    script_data: dict,
 ) -> list[DemoEvalDimension]:
     """Run vision-model evaluation on demo screenshots."""
     screenshot_content = _load_screenshots_as_content(demo_dir, script_data)
@@ -811,10 +893,18 @@ async def run_visual_evaluation(
         # No screenshots loaded — return failing scores
         return [
             DemoEvalDimension(
-                name=name, category="visual", passed=False, score=0.0,
+                name=name,
+                category="visual",
+                passed=False,
+                score=0.0,
                 issues=["No screenshots available for evaluation"],
             )
-            for name in ["visual_clarity", "visual_variety", "theme_compliance", "visual_narration_alignment"]
+            for name in [
+                "visual_clarity",
+                "visual_variety",
+                "theme_compliance",
+                "visual_narration_alignment",
+            ]
         ]
 
     prompt_text = _build_visual_eval_prompt(script_data)
@@ -824,13 +914,23 @@ async def run_visual_evaluation(
     output = result.output
 
     dimensions = []
-    for name in ["visual_clarity", "visual_variety", "theme_compliance", "visual_narration_alignment"]:
+    for name in [
+        "visual_clarity",
+        "visual_variety",
+        "theme_compliance",
+        "visual_narration_alignment",
+    ]:
         dim_score: DimScore = getattr(output, name)
-        dimensions.append(DemoEvalDimension(
-            name=name, category="visual",
-            passed=dim_score.passed, score=dim_score.score,
-            issues=dim_score.issues, evidence=dim_score.evidence,
-        ))
+        dimensions.append(
+            DemoEvalDimension(
+                name=name,
+                category="visual",
+                passed=dim_score.passed,
+                score=dim_score.score,
+                issues=dim_score.issues,
+                evidence=dim_score.evidence,
+            )
+        )
     return dimensions
 ```
 
@@ -928,8 +1028,11 @@ class TestRunVisualEvaluation:
 ```python
 class DiagnosisOutput(BaseModel):
     """LLM diagnosis of evaluation failures."""
+
     root_causes: list[str] = Field(description="Identified root causes for failures")
-    planning_overrides: str = Field(description="Additional instructions to append to the planning prompt on next iteration")
+    planning_overrides: str = Field(
+        description="Additional instructions to append to the planning prompt on next iteration"
+    )
     adjustments_summary: list[str] = Field(description="Human-readable list of what will change")
 
 
@@ -966,14 +1069,14 @@ def _build_diagnosis_prompt(
 {failing_text}
 
 ## Current Script Summary
-Title: {script_data.get('title', 'Unknown')}
-Audience: {script_data.get('audience', 'unknown')}
-Scenes: {len(script_data.get('scenes', []))}
-Intro: {script_data.get('intro_narration', '')[:200]}
+Title: {script_data.get("title", "Unknown")}
+Audience: {script_data.get("audience", "unknown")}
+Scenes: {len(script_data.get("scenes", []))}
+Intro: {script_data.get("intro_narration", "")[:200]}
 
 ## Style Guide
-Voice: {style_guide.get('voice', 'first-person')}
-Avoid: {'; '.join(style_guide.get('avoid', []))}
+Voice: {style_guide.get("voice", "first-person")}
+Avoid: {"; ".join(style_guide.get("avoid", []))}
 
 ## Instructions
 1. Identify the root cause of each failure
@@ -1011,8 +1114,14 @@ from agents.demo_pipeline.eval_rubrics import (
 class TestBuildDiagnosisPrompt:
     def test_includes_failing_dimensions(self):
         dims = [
-            DemoEvalDimension(name="style", category="text", passed=False, score=0.3,
-                              issues=["Uses 'leverage'", "Passive voice"], evidence="Scene 2: 'leverage the system'"),
+            DemoEvalDimension(
+                name="style",
+                category="text",
+                passed=False,
+                score=0.3,
+                issues=["Uses 'leverage'", "Passive voice"],
+                evidence="Scene 2: 'leverage the system'",
+            ),
             DemoEvalDimension(name="clarity", category="visual", passed=True, score=0.9),
         ]
         prompt = _build_diagnosis_prompt(dims, {"title": "Demo", "scenes": []}, {}, 1)
@@ -1040,8 +1149,14 @@ class TestDiagnoseFailures:
         with patch("agents.demo_pipeline.eval_rubrics.diagnosis_agent") as mock_agent:
             mock_agent.run = AsyncMock(return_value=mock_result)
             diagnosis = await diagnose_failures(
-                [DemoEvalDimension(name="style", category="text", passed=False, score=0.3, issues=["jargon"])],
-                {"title": "Demo", "scenes": []}, {}, 1,
+                [
+                    DemoEvalDimension(
+                        name="style", category="text", passed=False, score=0.3, issues=["jargon"]
+                    )
+                ],
+                {"title": "Demo", "scenes": []},
+                {},
+                1,
             )
 
         assert len(diagnosis.root_causes) == 1
@@ -1066,6 +1181,7 @@ class TestDiagnoseFailures:
 
 ```python
 """Demo evaluation agent — generates, evaluates, and iteratively improves demos."""
+
 from __future__ import annotations
 
 import argparse
@@ -1141,7 +1257,13 @@ async def run_eval_loop(
     on_progress: callable | None = None,
 ) -> DemoEvalResult:
     """Run the full generate → evaluate → heal loop."""
-    from agents.demo import generate_demo, parse_request, resolve_audience, load_personas, parse_duration
+    from agents.demo import (
+        generate_demo,
+        parse_request,
+        resolve_audience,
+        load_personas,
+        parse_duration,
+    )
     from agents.demo_pipeline.eval_rubrics import diagnose_failures
     from agents.demo_pipeline.narrative import load_style_guide
 
@@ -1162,9 +1284,9 @@ async def run_eval_loop(
     demo_dir: Path | None = None
 
     for iteration in range(1, max_iterations + 1):
-        progress(f"\n{'='*60}")
+        progress(f"\n{'=' * 60}")
         progress(f"ITERATION {iteration}/{max_iterations}")
-        progress(f"{'='*60}")
+        progress(f"{'=' * 60}")
 
         # Generate
         progress("Generating demo...")
@@ -1173,33 +1295,46 @@ async def run_eval_loop(
             # Inject overrides by extending the request — they'll flow into the planning prompt
             # We append to an env var that generate_demo can pick up
             import os
+
             os.environ["DEMO_EVAL_OVERRIDES"] = planning_overrides
 
         try:
             demo_dir = await generate_demo(
-                request=request, format=format, duration=duration,
+                request=request,
+                format=format,
+                duration=duration,
                 on_progress=progress,
             )
         except Exception as e:
             progress(f"Generation failed: {e}")
             report = DemoEvalReport(
-                dimensions=[DemoEvalDimension(
-                    name="generation_error", category="structural",
-                    passed=False, score=0.0, issues=[str(e)],
-                )],
-                overall_pass=False, overall_score=0.0, iteration=iteration,
+                dimensions=[
+                    DemoEvalDimension(
+                        name="generation_error",
+                        category="structural",
+                        passed=False,
+                        score=0.0,
+                        issues=[str(e)],
+                    )
+                ],
+                overall_pass=False,
+                overall_score=0.0,
+                iteration=iteration,
                 adjustments_applied=planning_overrides.split("\n") if planning_overrides else [],
             )
             history.append(report)
             continue
         finally:
             import os
+
             os.environ.pop("DEMO_EVAL_OVERRIDES", None)
 
         # Evaluate
         progress("Evaluating output...")
         report = await evaluate_demo_output(
-            demo_dir, expected_audience=archetype, target_seconds=target_seconds,
+            demo_dir,
+            expected_audience=archetype,
+            target_seconds=target_seconds,
         )
         report.iteration = iteration
         if planning_overrides:
@@ -1215,7 +1350,9 @@ async def run_eval_loop(
             progress(f"  [{status}] {dim.name}: {dim.score:.2f}")
             for issue in dim.issues:
                 progress(f"         -> {issue}")
-        progress(f"\n  Overall: {report.overall_score:.2f} ({'PASS' if report.overall_pass else 'FAIL'})")
+        progress(
+            f"\n  Overall: {report.overall_score:.2f} ({'PASS' if report.overall_pass else 'FAIL'})"
+        )
 
         if report.overall_pass:
             progress(f"\nDemo PASSED evaluation on iteration {iteration}")
@@ -1226,7 +1363,10 @@ async def run_eval_loop(
             progress("\nDiagnosing failures...")
             script_data = json.loads((demo_dir / "script.json").read_text())
             diagnosis = await diagnose_failures(
-                report.dimensions, script_data, style_guide, iteration,
+                report.dimensions,
+                script_data,
+                style_guide,
+                iteration,
             )
             progress(f"Root causes: {'; '.join(diagnosis.root_causes)}")
             progress(f"Adjustments: {'; '.join(diagnosis.adjustments_summary)}")
@@ -1235,8 +1375,14 @@ async def run_eval_loop(
             planning_overrides += f"\n{diagnosis.planning_overrides}"
 
     elapsed = time.time() - start_time
-    final_report = history[-1] if history else DemoEvalReport(
-        dimensions=[], overall_pass=False, overall_score=0.0,
+    final_report = (
+        history[-1]
+        if history
+        else DemoEvalReport(
+            dimensions=[],
+            overall_pass=False,
+            overall_score=0.0,
+        )
     )
 
     result = DemoEvalResult(
@@ -1263,15 +1409,20 @@ async def main() -> None:
         prog="python -m agents.demo_eval",
     )
     parser.add_argument(
-        "--scenario", default=DEFAULT_SCENARIO,
+        "--scenario",
+        default=DEFAULT_SCENARIO,
         help=f"Demo request text (default: '{DEFAULT_SCENARIO}')",
     )
     parser.add_argument("--format", default=DEFAULT_FORMAT, choices=["slides", "video"])
-    parser.add_argument("--duration", default=DEFAULT_DURATION, help="Target duration (e.g. '3m', '180s')")
+    parser.add_argument(
+        "--duration", default=DEFAULT_DURATION, help="Target duration (e.g. '3m', '180s')"
+    )
     parser.add_argument("--max-iterations", type=int, default=DEFAULT_MAX_ITERATIONS)
     parser.add_argument("--pass-threshold", type=float, default=DEFAULT_PASS_THRESHOLD)
     parser.add_argument(
-        "--eval-only", type=Path, default=None,
+        "--eval-only",
+        type=Path,
+        default=None,
         help="Evaluate an existing demo directory (no generation or healing)",
     )
     args = parser.parse_args()
@@ -1281,7 +1432,9 @@ async def main() -> None:
     if args.eval_only:
         # Evaluate existing output
         report = await evaluate_demo_output(args.eval_only)
-        print(f"\nOverall: {report.overall_score:.2f} ({'PASS' if report.overall_pass else 'FAIL'})")
+        print(
+            f"\nOverall: {report.overall_score:.2f} ({'PASS' if report.overall_pass else 'FAIL'})"
+        )
         for dim in report.dimensions:
             status = "PASS" if dim.passed else "FAIL"
             print(f"  [{status}] {dim.name}: {dim.score:.2f}")
@@ -1299,13 +1452,13 @@ async def main() -> None:
         on_progress=lambda msg: print(msg),
     )
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"FINAL RESULT: {'PASSED' if result.passed else 'FAILED'}")
     print(f"Iterations: {result.iterations}")
     print(f"Score: {result.final_report.overall_score:.2f}")
     print(f"Duration: {result.total_duration_seconds:.0f}s")
     print(f"Output: {result.demo_dir}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     sys.exit(0 if result.passed else 1)
 
@@ -1320,6 +1473,7 @@ if __name__ == "__main__":
 
 ```python
 """Tests for the demo evaluation agent."""
+
 from __future__ import annotations
 
 import json
@@ -1341,12 +1495,16 @@ class TestEvaluateDemoOutput:
 
         struct_dims = [
             DemoEvalDimension(name="files_present", category="structural", passed=True, score=1.0),
-            DemoEvalDimension(name="metadata_correctness", category="structural", passed=True, score=1.0),
+            DemoEvalDimension(
+                name="metadata_correctness", category="structural", passed=True, score=1.0
+            ),
             DemoEvalDimension(name="html_integrity", category="structural", passed=True, score=1.0),
         ]
         text_dims = [
             DemoEvalDimension(name="style_compliance", category="text", passed=True, score=0.9),
-            DemoEvalDimension(name="audience_calibration", category="text", passed=True, score=0.85),
+            DemoEvalDimension(
+                name="audience_calibration", category="text", passed=True, score=0.85
+            ),
             DemoEvalDimension(name="duration_feasibility", category="text", passed=True, score=0.8),
             DemoEvalDimension(name="key_points_quality", category="text", passed=True, score=0.8),
             DemoEvalDimension(name="narrative_coherence", category="text", passed=True, score=0.9),
@@ -1355,14 +1513,28 @@ class TestEvaluateDemoOutput:
             DemoEvalDimension(name="visual_clarity", category="visual", passed=True, score=0.85),
             DemoEvalDimension(name="visual_variety", category="visual", passed=True, score=0.8),
             DemoEvalDimension(name="theme_compliance", category="visual", passed=True, score=0.9),
-            DemoEvalDimension(name="visual_narration_alignment", category="visual", passed=True, score=0.85),
+            DemoEvalDimension(
+                name="visual_narration_alignment", category="visual", passed=True, score=0.85
+            ),
         ]
 
-        with patch("agents.demo_eval.run_structural_checks", return_value=struct_dims) as mock_struct, \
-             patch("agents.demo_eval.run_text_evaluation", new_callable=AsyncMock, return_value=text_dims), \
-             patch("agents.demo_eval.run_visual_evaluation", new_callable=AsyncMock, return_value=visual_dims):
-
+        with (
+            patch(
+                "agents.demo_eval.run_structural_checks", return_value=struct_dims
+            ) as mock_struct,
+            patch(
+                "agents.demo_eval.run_text_evaluation",
+                new_callable=AsyncMock,
+                return_value=text_dims,
+            ),
+            patch(
+                "agents.demo_eval.run_visual_evaluation",
+                new_callable=AsyncMock,
+                return_value=visual_dims,
+            ),
+        ):
             from agents.demo_eval import evaluate_demo_output
+
             report = await evaluate_demo_output(demo_dir, expected_audience="family")
 
         assert len(report.dimensions) == 12  # 3 + 5 + 4
@@ -1377,8 +1549,13 @@ class TestEvaluateDemoOutput:
         demo_dir = _make_demo_dir(tmp_path)
 
         struct_dims = [
-            DemoEvalDimension(name="files_present", category="structural", passed=False, score=0.0,
-                              issues=["Missing script.json"]),
+            DemoEvalDimension(
+                name="files_present",
+                category="structural",
+                passed=False,
+                score=0.0,
+                issues=["Missing script.json"],
+            ),
         ]
         text_dims = [
             DemoEvalDimension(name="style_compliance", category="text", passed=True, score=0.95),
@@ -1387,11 +1564,21 @@ class TestEvaluateDemoOutput:
             DemoEvalDimension(name="visual_clarity", category="visual", passed=True, score=0.95),
         ]
 
-        with patch("agents.demo_eval.run_structural_checks", return_value=struct_dims), \
-             patch("agents.demo_eval.run_text_evaluation", new_callable=AsyncMock, return_value=text_dims), \
-             patch("agents.demo_eval.run_visual_evaluation", new_callable=AsyncMock, return_value=visual_dims):
-
+        with (
+            patch("agents.demo_eval.run_structural_checks", return_value=struct_dims),
+            patch(
+                "agents.demo_eval.run_text_evaluation",
+                new_callable=AsyncMock,
+                return_value=text_dims,
+            ),
+            patch(
+                "agents.demo_eval.run_visual_evaluation",
+                new_callable=AsyncMock,
+                return_value=visual_dims,
+            ),
+        ):
             from agents.demo_eval import evaluate_demo_output
+
             report = await evaluate_demo_output(demo_dir)
 
         assert report.overall_pass is False  # structural failure = overall fail
@@ -1403,22 +1590,35 @@ class TestRunEvalLoop:
         """If generation + evaluation passes immediately, no healing needed."""
         passing_report = DemoEvalReport(
             dimensions=[
-                DemoEvalDimension(name="files_present", category="structural", passed=True, score=1.0),
+                DemoEvalDimension(
+                    name="files_present", category="structural", passed=True, score=1.0
+                ),
             ],
-            overall_pass=True, overall_score=0.9,
+            overall_pass=True,
+            overall_score=0.9,
         )
 
-        with patch("agents.demo_eval.generate_demo", new_callable=AsyncMock, return_value=Path("/tmp/fake")), \
-             patch("agents.demo_eval.evaluate_demo_output", new_callable=AsyncMock, return_value=passing_report), \
-             patch("agents.demo_eval.parse_request", return_value=("the system", "a family member")), \
-             patch("agents.demo_eval.resolve_audience", return_value=("family", "")), \
-             patch("agents.demo_eval.load_personas", return_value={}), \
-             patch("agents.demo_eval.parse_duration", return_value=180), \
-             patch("agents.demo_eval.load_style_guide", return_value={}), \
-             patch("pathlib.Path.read_text", return_value='{"scenes":[]}'), \
-             patch("pathlib.Path.write_text"):
-
+        with (
+            patch(
+                "agents.demo_eval.generate_demo",
+                new_callable=AsyncMock,
+                return_value=Path("/tmp/fake"),
+            ),
+            patch(
+                "agents.demo_eval.evaluate_demo_output",
+                new_callable=AsyncMock,
+                return_value=passing_report,
+            ),
+            patch("agents.demo_eval.parse_request", return_value=("the system", "a family member")),
+            patch("agents.demo_eval.resolve_audience", return_value=("family", "")),
+            patch("agents.demo_eval.load_personas", return_value={}),
+            patch("agents.demo_eval.parse_duration", return_value=180),
+            patch("agents.demo_eval.load_style_guide", return_value={}),
+            patch("pathlib.Path.read_text", return_value='{"scenes":[]}'),
+            patch("pathlib.Path.write_text"),
+        ):
             from agents.demo_eval import run_eval_loop
+
             result = await run_eval_loop(max_iterations=3)
 
         assert result.passed is True
@@ -1429,16 +1629,23 @@ class TestRunEvalLoop:
         """Fail first, diagnose, pass second."""
         failing_report = DemoEvalReport(
             dimensions=[
-                DemoEvalDimension(name="style", category="text", passed=False, score=0.4,
-                                  issues=["Uses corporate jargon"]),
+                DemoEvalDimension(
+                    name="style",
+                    category="text",
+                    passed=False,
+                    score=0.4,
+                    issues=["Uses corporate jargon"],
+                ),
             ],
-            overall_pass=False, overall_score=0.4,
+            overall_pass=False,
+            overall_score=0.4,
         )
         passing_report = DemoEvalReport(
             dimensions=[
                 DemoEvalDimension(name="style", category="text", passed=True, score=0.9),
             ],
-            overall_pass=True, overall_score=0.9,
+            overall_pass=True,
+            overall_score=0.9,
         )
 
         eval_call_count = 0
@@ -1453,18 +1660,28 @@ class TestRunEvalLoop:
         mock_diagnosis.planning_overrides = "AVOID: leverage, synergize"
         mock_diagnosis.adjustments_summary = ["Removed jargon"]
 
-        with patch("agents.demo_eval.generate_demo", new_callable=AsyncMock, return_value=Path("/tmp/fake")), \
-             patch("agents.demo_eval.evaluate_demo_output", side_effect=mock_evaluate), \
-             patch("agents.demo_eval.diagnose_failures", new_callable=AsyncMock, return_value=mock_diagnosis), \
-             patch("agents.demo_eval.parse_request", return_value=("the system", "a family member")), \
-             patch("agents.demo_eval.resolve_audience", return_value=("family", "")), \
-             patch("agents.demo_eval.load_personas", return_value={}), \
-             patch("agents.demo_eval.parse_duration", return_value=180), \
-             patch("agents.demo_eval.load_style_guide", return_value={}), \
-             patch("pathlib.Path.read_text", return_value='{"scenes":[]}'), \
-             patch("pathlib.Path.write_text"):
-
+        with (
+            patch(
+                "agents.demo_eval.generate_demo",
+                new_callable=AsyncMock,
+                return_value=Path("/tmp/fake"),
+            ),
+            patch("agents.demo_eval.evaluate_demo_output", side_effect=mock_evaluate),
+            patch(
+                "agents.demo_eval.diagnose_failures",
+                new_callable=AsyncMock,
+                return_value=mock_diagnosis,
+            ),
+            patch("agents.demo_eval.parse_request", return_value=("the system", "a family member")),
+            patch("agents.demo_eval.resolve_audience", return_value=("family", "")),
+            patch("agents.demo_eval.load_personas", return_value={}),
+            patch("agents.demo_eval.parse_duration", return_value=180),
+            patch("agents.demo_eval.load_style_guide", return_value={}),
+            patch("pathlib.Path.read_text", return_value='{"scenes":[]}'),
+            patch("pathlib.Path.write_text"),
+        ):
             from agents.demo_eval import run_eval_loop
+
             result = await run_eval_loop(max_iterations=3)
 
         assert result.passed is True
@@ -1503,7 +1720,9 @@ Replace the env var approach in `run_eval_loop()`:
 # Remove: os.environ["DEMO_EVAL_OVERRIDES"] = planning_overrides
 # Replace with:
 demo_dir = await generate_demo(
-    request=request, format=format, duration=duration,
+    request=request,
+    format=format,
+    duration=duration,
     on_progress=progress,
     planning_overrides=planning_overrides if planning_overrides else None,
 )
@@ -1520,11 +1739,14 @@ class TestBuildPrompt:
         """build_planning_prompt doesn't handle overrides — generate_demo does."""
         # This just verifies the function signature hasn't changed
         from agents.demo import build_planning_prompt
+
         personas = load_personas()
         prompt = build_planning_prompt(
-            scope="test", audience_name="family",
+            scope="test",
+            audience_name="family",
             persona=personas["family"],
-            research_context="", planning_context="## Override\nDo this thing",
+            research_context="",
+            planning_context="## Override\nDo this thing",
         )
         assert "Do this thing" in prompt
 ```

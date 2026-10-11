@@ -156,6 +156,7 @@ git commit -m "feat(demo): add audience persona archetypes"
 
 ```python
 """Tests for demo script data models."""
+
 from __future__ import annotations
 
 import json
@@ -245,6 +246,7 @@ Expected: FAIL — `ModuleNotFoundError: No module named 'agents.demo_models'`
 
 ```python
 """Data models for the demo generator agent."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -308,10 +310,7 @@ def load_personas(path: Path | None = None) -> dict[str, AudiencePersona]:
     """Load audience personas from YAML file."""
     p = path or PERSONAS_PATH
     raw = yaml.safe_load(p.read_text())
-    return {
-        name: AudiencePersona.model_validate(data)
-        for name, data in raw["archetypes"].items()
-    }
+    return {name: AudiencePersona.model_validate(data) for name, data in raw["archetypes"].items()}
 ```
 
 **Step 4: Run tests**
@@ -340,6 +339,7 @@ git commit -m "feat(demo): add DemoScript models and persona loader"
 
 ```python
 """Tests for screenshot capture pipeline."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -375,9 +375,7 @@ class TestCaptureScreenshots:
         ]
 
     @patch("agents.demo_pipeline.screenshots.async_playwright")
-    async def test_captures_screenshots(
-        self, mock_pw, specs, output_dir
-    ):
+    async def test_captures_screenshots(self, mock_pw, specs, output_dir):
         # Set up mock chain
         mock_page = AsyncMock()
         mock_browser = AsyncMock()
@@ -409,9 +407,7 @@ class TestCaptureScreenshots:
             ("wide", ScreenshotSpec(url="http://localhost:5173", viewport=(2560, 1440))),
         ]
         await capture_screenshots(specs, output_dir)
-        mock_page.set_viewport_size.assert_called_with(
-            {"width": 2560, "height": 1440}
-        )
+        mock_page.set_viewport_size.assert_called_with({"width": 2560, "height": 1440})
 ```
 
 **Step 2: Run test to verify it fails**
@@ -430,6 +426,7 @@ Expected: FAIL — `ModuleNotFoundError`
 
 ```python
 """Screenshot capture pipeline using Playwright."""
+
 from __future__ import annotations
 
 import logging
@@ -460,15 +457,11 @@ async def capture_screenshots(
             if on_progress:
                 on_progress(f"Capturing screenshot {i}/{len(specs)}: {name}")
 
-            await page.set_viewport_size(
-                {"width": spec.viewport[0], "height": spec.viewport[1]}
-            )
+            await page.set_viewport_size({"width": spec.viewport[0], "height": spec.viewport[1]})
             await page.goto(spec.url, wait_until="networkidle")
 
             if spec.wait_for:
-                await page.wait_for_selector(
-                    f"text={spec.wait_for}", timeout=10_000
-                )
+                await page.wait_for_selector(f"text={spec.wait_for}", timeout=10_000)
 
             for action in spec.actions:
                 parts = action.split(" ", 1)
@@ -528,6 +521,7 @@ git commit -m "feat(demo): screenshot capture pipeline with Playwright"
 
 ```python
 """Tests for Marp slide generation."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -632,9 +626,7 @@ class TestRenderSlides:
 
         screenshot_map = {"Dash": fake_img}
 
-        md_path = await render_slides(
-            script, screenshot_map, tmp_path, render_pdf=False
-        )
+        md_path = await render_slides(script, screenshot_map, tmp_path, render_pdf=False)
 
         assert md_path.exists()
         assert md_path.suffix == ".md"
@@ -754,6 +746,7 @@ footer {
 
 ```python
 """Marp slide generation from DemoScript."""
+
 from __future__ import annotations
 
 import logging
@@ -768,9 +761,7 @@ log = logging.getLogger(__name__)
 THEME_PATH = Path(__file__).parent / "gruvbox-marp.css"
 
 
-def generate_marp_markdown(
-    script: DemoScript, screenshots: dict[str, Path]
-) -> str:
+def generate_marp_markdown(script: DemoScript, screenshots: dict[str, Path]) -> str:
     """Generate Marp-flavored markdown from a DemoScript."""
     lines: list[str] = []
 
@@ -856,12 +847,16 @@ async def render_slides(
 
         result = subprocess.run(
             [
-                "npx", "-y", "@marp-team/marp-cli",
+                "npx",
+                "-y",
+                "@marp-team/marp-cli",
                 str(md_path),
-                "--theme", str(theme_dest),
+                "--theme",
+                str(theme_dest),
                 "--html",
                 "--allow-local-files",
-                "-o", str(pdf_path),
+                "-o",
+                str(pdf_path),
             ],
             capture_output=True,
             text=True,
@@ -900,6 +895,7 @@ git commit -m "feat(demo): Marp slide renderer with Gruvbox theme"
 
 ```python
 """Tests for the demo agent."""
+
 from __future__ import annotations
 
 import json
@@ -922,9 +918,7 @@ class TestResolveAudience:
         from agents.demo import resolve_audience
 
         # Unknown audience falls back to technical-peer
-        archetype, context = resolve_audience(
-            "a random stranger", load_personas()
-        )
+        archetype, context = resolve_audience("a random stranger", load_personas())
         assert archetype in ("family", "technical-peer", "leadership", "team-member")
 
 
@@ -989,6 +983,7 @@ Expected: FAIL — `ModuleNotFoundError`
 
 ```python
 """Demo generator agent — produces audience-tailored demos from natural language requests."""
+
 from __future__ import annotations
 
 import argparse
@@ -1047,9 +1042,7 @@ def parse_request(text: str) -> tuple[str, str]:
     return text.strip(), "technical-peer"
 
 
-def resolve_audience(
-    audience_text: str, personas: dict[str, AudiencePersona]
-) -> tuple[str, str]:
+def resolve_audience(audience_text: str, personas: dict[str, AudiencePersona]) -> tuple[str, str]:
     """Resolve audience text to archetype name + extra context."""
     lower = audience_text.lower()
 
@@ -1185,10 +1178,7 @@ async def generate_demo(
     )
 
     # Map scene titles to screenshot paths
-    screenshot_map = {
-        scene.title: path
-        for scene, path in zip(script.scenes, screenshot_paths)
-    }
+    screenshot_map = {scene.title: path for scene, path in zip(script.scenes, screenshot_paths)}
 
     # 6. Render slides
     progress("Rendering slides...")
@@ -1205,10 +1195,19 @@ async def main() -> None:
         description="Generate audience-tailored system demos",
         prog="python -m agents.demo",
     )
-    parser.add_argument("request", help="Natural language request, e.g. 'the entire system for a family member'")
-    parser.add_argument("--audience", help="Override audience archetype (family, technical-peer, leadership, team-member)")
-    parser.add_argument("--format", choices=["slides", "markdown-only"], default="slides", help="Output format")
-    parser.add_argument("--json", action="store_true", help="Print script JSON instead of generating demo")
+    parser.add_argument(
+        "request", help="Natural language request, e.g. 'the entire system for a family member'"
+    )
+    parser.add_argument(
+        "--audience",
+        help="Override audience archetype (family, technical-peer, leadership, team-member)",
+    )
+    parser.add_argument(
+        "--format", choices=["slides", "markdown-only"], default="slides", help="Output format"
+    )
+    parser.add_argument(
+        "--json", action="store_true", help="Print script JSON instead of generating demo"
+    )
     args = parser.parse_args()
 
     request = args.request
@@ -1274,13 +1273,15 @@ Read `~/projects/logos/data/agents.py` to see how agents are registered. The dem
 Add to the `AGENTS` list (following the existing pattern):
 
 ```python
-{
-    "name": "demo",
-    "description": "Generate audience-tailored system demos",
-    "command": "uv run python -m agents.demo",
-    "llm": True,
-    "flags": ["--json", "--format slides", "--format markdown-only"],
-},
+(
+    {
+        "name": "demo",
+        "description": "Generate audience-tailored system demos",
+        "command": "uv run python -m agents.demo",
+        "llm": True,
+        "flags": ["--json", "--format slides", "--format markdown-only"],
+    },
+)
 ```
 
 **Step 3: Verify**
@@ -1306,6 +1307,7 @@ git commit -m "feat(demo): register demo agent in logos API"
 
 ```python
 """Integration test for demo generation pipeline (LLM mocked, pipeline real)."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -1363,8 +1365,7 @@ class TestDemoIntegration:
 
         # Capture screenshots
         specs = [
-            (f"{i:02d}-scene", scene.screenshot)
-            for i, scene in enumerate(mock_script.scenes, 1)
+            (f"{i:02d}-scene", scene.screenshot) for i, scene in enumerate(mock_script.scenes, 1)
         ]
         screenshot_dir = tmp_path / "screenshots"
         paths = await capture_screenshots(specs, screenshot_dir)
@@ -1375,15 +1376,10 @@ class TestDemoIntegration:
             p.write_bytes(b"fake png data")
 
         # Build screenshot map
-        screenshot_map = {
-            scene.title: path
-            for scene, path in zip(mock_script.scenes, paths)
-        }
+        screenshot_map = {scene.title: path for scene, path in zip(mock_script.scenes, paths)}
 
         # Render slides (markdown only, skip PDF to avoid npx dependency in CI)
-        md_path = await render_slides(
-            mock_script, screenshot_map, tmp_path, render_pdf=False
-        )
+        md_path = await render_slides(mock_script, screenshot_map, tmp_path, render_pdf=False)
 
         # Verify outputs
         assert md_path.exists()

@@ -218,6 +218,7 @@ Python module to load and validate axiom definitions from hapaxromana.
 ```python
 # tests/test_axiom_registry.py
 """Tests for shared.axiom_registry."""
+
 import pytest
 from pathlib import Path
 
@@ -331,6 +332,7 @@ Usage:
     axiom = get_axiom("single_user")
     implications = load_implications("single_user")
 """
+
 from __future__ import annotations
 
 import logging
@@ -403,9 +405,7 @@ def get_axiom(axiom_id: str, *, path: Path = AXIOMS_PATH) -> Axiom | None:
     return None
 
 
-def load_implications(
-    axiom_id: str, *, path: Path = AXIOMS_PATH
-) -> list[Implication]:
+def load_implications(axiom_id: str, *, path: Path = AXIOMS_PATH) -> list[Implication]:
     """Load derived implications for a specific axiom."""
     impl_file = path / "implications" / f"{axiom_id.replace('_', '-')}.yaml"
     if not impl_file.exists():
@@ -422,14 +422,16 @@ def load_implications(
 
     impls = []
     for entry in data.get("implications", []):
-        impls.append(Implication(
-            id=entry["id"],
-            axiom_id=data.get("axiom_id", axiom_id),
-            tier=entry.get("tier", "T2"),
-            text=entry.get("text", ""),
-            enforcement=entry.get("enforcement", "warn"),
-            canon=entry.get("canon", ""),
-        ))
+        impls.append(
+            Implication(
+                id=entry["id"],
+                axiom_id=data.get("axiom_id", axiom_id),
+                tier=entry.get("tier", "T2"),
+                text=entry.get("text", ""),
+                enforcement=entry.get("enforcement", "warn"),
+                canon=entry.get("canon", ""),
+            )
+        )
 
     return impls
 ```
@@ -474,6 +476,7 @@ Qdrant-backed precedent database with semantic search, CRUD, seed loading, and a
 ```python
 # tests/test_axiom_precedents.py
 """Tests for shared.axiom_precedents."""
+
 import pytest
 from unittest.mock import MagicMock, patch
 from datetime import datetime, timezone
@@ -629,6 +632,7 @@ Usage:
     # Record a new precedent
     store.record(Precedent(...))
 """
+
 from __future__ import annotations
 
 import json
@@ -739,10 +743,12 @@ class PrecedentStore:
 
         query_vec = embed(situation, prefix="search_query")
 
-        query_filter = Filter(must=[
-            FieldCondition(key="axiom_id", match=MatchValue(value=axiom_id)),
-            FieldCondition(key="superseded_by", match=MatchValue(value="")),
-        ])
+        query_filter = Filter(
+            must=[
+                FieldCondition(key="axiom_id", match=MatchValue(value=axiom_id)),
+                FieldCondition(key="superseded_by", match=MatchValue(value="")),
+            ]
+        )
 
         results = self.client.query_points(
             COLLECTION,
@@ -771,8 +777,12 @@ class PrecedentStore:
             [PointStruct(id=point_id, vector=vec, payload=self._to_payload(precedent))],
         )
 
-        log.info("Recorded precedent %s (axiom=%s, decision=%s)",
-                 precedent.id, precedent.axiom_id, precedent.decision)
+        log.info(
+            "Recorded precedent %s (axiom=%s, decision=%s)",
+            precedent.id,
+            precedent.axiom_id,
+            precedent.decision,
+        )
         return precedent.id
 
     def load_seeds(self, axioms_path: Path) -> int:
@@ -797,28 +807,32 @@ class PrecedentStore:
         axiom_id = data.get("axiom_id", "")
         precedents = []
         for entry in data.get("precedents", []):
-            precedents.append(Precedent(
-                id=entry["id"],
-                axiom_id=axiom_id,
-                situation=entry.get("situation", ""),
-                decision=entry.get("decision", ""),
-                reasoning=entry.get("reasoning", ""),
-                tier=entry.get("tier", "T2"),
-                distinguishing_facts=entry.get("distinguishing_facts", []),
-                authority=entry.get("authority", "derived"),
-                created=entry.get("created", ""),
-                superseded_by=None,
-            ))
+            precedents.append(
+                Precedent(
+                    id=entry["id"],
+                    axiom_id=axiom_id,
+                    situation=entry.get("situation", ""),
+                    decision=entry.get("decision", ""),
+                    reasoning=entry.get("reasoning", ""),
+                    tier=entry.get("tier", "T2"),
+                    distinguishing_facts=entry.get("distinguishing_facts", []),
+                    authority=entry.get("authority", "derived"),
+                    created=entry.get("created", ""),
+                    superseded_by=None,
+                )
+            )
         return precedents
 
     def get_by_axiom(self, axiom_id: str, *, limit: int = 20) -> list[Precedent]:
         """Get all precedents for an axiom, sorted by authority then date."""
         from qdrant_client.models import Filter, FieldCondition, MatchValue
 
-        query_filter = Filter(must=[
-            FieldCondition(key="axiom_id", match=MatchValue(value=axiom_id)),
-            FieldCondition(key="superseded_by", match=MatchValue(value="")),
-        ])
+        query_filter = Filter(
+            must=[
+                FieldCondition(key="axiom_id", match=MatchValue(value=axiom_id)),
+                FieldCondition(key="superseded_by", match=MatchValue(value="")),
+            ]
+        )
 
         results = self.client.scroll(
             COLLECTION,
@@ -829,17 +843,21 @@ class PrecedentStore:
         precedents = [self._from_payload(p.id, p.payload) for p in results[0]]
         # Sort: operator first, then agent, then derived; within same authority, newest first
         authority_order = {"operator": 0, "agent": 1, "derived": 2}
-        precedents.sort(key=lambda p: (authority_order.get(p.authority, 9), p.created), reverse=False)
+        precedents.sort(
+            key=lambda p: (authority_order.get(p.authority, 9), p.created), reverse=False
+        )
         return precedents
 
     def get_pending_review(self, *, limit: int = 20) -> list[Precedent]:
         """Get agent-created precedents awaiting operator review."""
         from qdrant_client.models import Filter, FieldCondition, MatchValue
 
-        query_filter = Filter(must=[
-            FieldCondition(key="authority", match=MatchValue(value="agent")),
-            FieldCondition(key="superseded_by", match=MatchValue(value="")),
-        ])
+        query_filter = Filter(
+            must=[
+                FieldCondition(key="authority", match=MatchValue(value="agent")),
+                FieldCondition(key="superseded_by", match=MatchValue(value="")),
+            ]
+        )
 
         results = self.client.scroll(
             COLLECTION,
@@ -855,9 +873,11 @@ class PrecedentStore:
 
         results = self.client.scroll(
             COLLECTION,
-            scroll_filter=Filter(must=[
-                FieldCondition(key="precedent_id", match=MatchValue(value=precedent_id)),
-            ]),
+            scroll_filter=Filter(
+                must=[
+                    FieldCondition(key="precedent_id", match=MatchValue(value=precedent_id)),
+                ]
+            ),
             limit=1,
         )
 
@@ -866,6 +886,7 @@ class PrecedentStore:
             payload = dict(point.payload)
             payload["authority"] = "operator"
             from qdrant_client.models import PointStruct
+
             self.client.upsert(
                 COLLECTION,
                 [PointStruct(id=point.id, vector=point.vector, payload=payload)],
@@ -879,9 +900,11 @@ class PrecedentStore:
         # Mark old as superseded
         results = self.client.scroll(
             COLLECTION,
-            scroll_filter=Filter(must=[
-                FieldCondition(key="precedent_id", match=MatchValue(value=old_id)),
-            ]),
+            scroll_filter=Filter(
+                must=[
+                    FieldCondition(key="precedent_id", match=MatchValue(value=old_id)),
+                ]
+            ),
             limit=1,
         )
 
@@ -892,6 +915,7 @@ class PrecedentStore:
             payload = dict(point.payload)
             payload["superseded_by"] = new_id
             from qdrant_client.models import PointStruct
+
             self.client.upsert(
                 COLLECTION,
                 [PointStruct(id=point.id, vector=point.vector, payload=payload)],
@@ -940,6 +964,7 @@ Tools that LLM agents call to check axiom compliance and record decisions.
 ```python
 # tests/test_axiom_tools.py
 """Tests for shared.axiom_tools."""
+
 import pytest
 from unittest.mock import MagicMock, patch, AsyncMock
 
@@ -965,8 +990,10 @@ class TestCheckAxiomCompliance:
         mock_precedent.distinguishing_facts = ["Single device"]
         mock_precedent.situation = "Tailscale access"
 
-        with patch("shared.axiom_tools.PrecedentStore") as MockStore, \
-             patch("shared.axiom_tools.load_axioms") as mock_load:
+        with (
+            patch("shared.axiom_tools.PrecedentStore") as MockStore,
+            patch("shared.axiom_tools.load_axioms") as mock_load,
+        ):
             mock_axiom = MagicMock()
             mock_axiom.id = "single_user"
             mock_axiom.text = "Single user system."
@@ -974,7 +1001,9 @@ class TestCheckAxiomCompliance:
             MockStore.return_value.search.return_value = [mock_precedent]
 
             result = await check_axiom_compliance(
-                ctx, situation="Adding Tailscale VPN", axiom_id="single_user",
+                ctx,
+                situation="Adding Tailscale VPN",
+                axiom_id="single_user",
             )
 
         assert "PRE-001" in result
@@ -984,9 +1013,11 @@ class TestCheckAxiomCompliance:
     async def test_returns_axiom_text_when_no_precedents(self):
         ctx = _mock_ctx()
 
-        with patch("shared.axiom_tools.PrecedentStore") as MockStore, \
-             patch("shared.axiom_tools.load_axioms") as mock_load, \
-             patch("shared.axiom_tools.load_implications") as mock_impl:
+        with (
+            patch("shared.axiom_tools.PrecedentStore") as MockStore,
+            patch("shared.axiom_tools.load_axioms") as mock_load,
+            patch("shared.axiom_tools.load_implications") as mock_impl,
+        ):
             mock_axiom = MagicMock()
             mock_axiom.id = "single_user"
             mock_axiom.text = "Single user system."
@@ -995,7 +1026,8 @@ class TestCheckAxiomCompliance:
             mock_impl.return_value = []
 
             result = await check_axiom_compliance(
-                ctx, situation="Adding multi-tenant DB",
+                ctx,
+                situation="Adding multi-tenant DB",
             )
 
         assert "Single user system" in result
@@ -1056,6 +1088,7 @@ Usage:
     for tool_fn in get_axiom_tools():
         agent.tool(tool_fn)
 """
+
 from __future__ import annotations
 
 import json
@@ -1266,6 +1299,7 @@ Add after the capacity check group (end of check definitions, before `run_checks
 ```python
 # ── Axiom infrastructure checks ──────────────────────────────────────────────
 
+
 @check_group("axioms")
 async def check_axiom_infrastructure() -> list[CheckResult]:
     """Check axiom enforcement infrastructure is operational."""
@@ -1274,76 +1308,111 @@ async def check_axiom_infrastructure() -> list[CheckResult]:
 
     # Check registry exists and is parseable
     from shared.axiom_registry import load_axioms, AXIOMS_PATH
+
     registry_file = AXIOMS_PATH / "registry.yaml"
     if registry_file.exists():
         axioms = load_axioms()
         if axioms:
-            results.append(CheckResult(
-                name="axiom.registry", group="axioms", status=Status.HEALTHY,
-                message=f"Registry loaded: {len(axioms)} active axiom(s)",
-                duration_ms=_timed(t),
-            ))
+            results.append(
+                CheckResult(
+                    name="axiom.registry",
+                    group="axioms",
+                    status=Status.HEALTHY,
+                    message=f"Registry loaded: {len(axioms)} active axiom(s)",
+                    duration_ms=_timed(t),
+                )
+            )
         else:
-            results.append(CheckResult(
-                name="axiom.registry", group="axioms", status=Status.DEGRADED,
-                message="Registry exists but no active axioms found",
-                duration_ms=_timed(t),
-            ))
+            results.append(
+                CheckResult(
+                    name="axiom.registry",
+                    group="axioms",
+                    status=Status.DEGRADED,
+                    message="Registry exists but no active axioms found",
+                    duration_ms=_timed(t),
+                )
+            )
     else:
-        results.append(CheckResult(
-            name="axiom.registry", group="axioms", status=Status.DEGRADED,
-            message="Axiom registry not found",
-            detail=str(registry_file),
-            duration_ms=_timed(t),
-        ))
+        results.append(
+            CheckResult(
+                name="axiom.registry",
+                group="axioms",
+                status=Status.DEGRADED,
+                message="Axiom registry not found",
+                detail=str(registry_file),
+                duration_ms=_timed(t),
+            )
+        )
 
     # Check precedent collection exists in Qdrant
     t2 = time.monotonic()
     try:
         from shared.config import get_qdrant
+
         client = get_qdrant()
         collections = [c.name for c in client.get_collections().collections]
         if "axiom-precedents" in collections:
             info = client.get_collection("axiom-precedents")
             count = info.points_count
-            results.append(CheckResult(
-                name="axiom.precedents", group="axioms", status=Status.HEALTHY,
-                message=f"Precedent collection: {count} point(s)",
-                duration_ms=_timed(t2),
-            ))
+            results.append(
+                CheckResult(
+                    name="axiom.precedents",
+                    group="axioms",
+                    status=Status.HEALTHY,
+                    message=f"Precedent collection: {count} point(s)",
+                    duration_ms=_timed(t2),
+                )
+            )
         else:
-            results.append(CheckResult(
-                name="axiom.precedents", group="axioms", status=Status.DEGRADED,
-                message="axiom-precedents collection not found in Qdrant",
-                remediation="Run: uv run python -c 'from shared.axiom_precedents import PrecedentStore; PrecedentStore().ensure_collection()'",
-                duration_ms=_timed(t2),
-            ))
+            results.append(
+                CheckResult(
+                    name="axiom.precedents",
+                    group="axioms",
+                    status=Status.DEGRADED,
+                    message="axiom-precedents collection not found in Qdrant",
+                    remediation="Run: uv run python -c 'from shared.axiom_precedents import PrecedentStore; PrecedentStore().ensure_collection()'",
+                    duration_ms=_timed(t2),
+                )
+            )
     except Exception as e:
-        results.append(CheckResult(
-            name="axiom.precedents", group="axioms", status=Status.FAILED,
-            message="Cannot check precedent collection",
-            detail=str(e),
-            duration_ms=_timed(t2),
-        ))
+        results.append(
+            CheckResult(
+                name="axiom.precedents",
+                group="axioms",
+                status=Status.FAILED,
+                message="Cannot check precedent collection",
+                detail=str(e),
+                duration_ms=_timed(t2),
+            )
+        )
 
     # Check implications exist for active axioms
     t3 = time.monotonic()
     if axioms:
         from shared.axiom_registry import load_implications
+
         missing = [a.id for a in axioms if not load_implications(a.id)]
         if not missing:
-            results.append(CheckResult(
-                name="axiom.implications", group="axioms", status=Status.HEALTHY,
-                message="All active axioms have implication files",
-                duration_ms=_timed(t3),
-            ))
+            results.append(
+                CheckResult(
+                    name="axiom.implications",
+                    group="axioms",
+                    status=Status.HEALTHY,
+                    message="All active axioms have implication files",
+                    duration_ms=_timed(t3),
+                )
+            )
         else:
-            results.append(CheckResult(
-                name="axiom.implications", group="axioms", status=Status.DEGRADED,
-                message=f"Missing implications for: {', '.join(missing)}",
-                remediation=f"Run: uv run python -m shared.axiom_derivation --axiom {missing[0]}",
-                duration_ms=_timed(t3),
-            ))
+            results.append(
+                CheckResult(
+                    name="axiom.implications",
+                    group="axioms",
+                    status=Status.DEGRADED,
+                    message=f"Missing implications for: {', '.join(missing)}",
+                    remediation=f"Run: uv run python -m shared.axiom_derivation --axiom {missing[0]}",
+                    duration_ms=_timed(t3),
+                )
+            )
 
     return results
 ```
@@ -1355,7 +1424,10 @@ In `tests/test_health_monitor.py`, update the registry test to include "axioms" 
 ```python
 class TestAxiomChecks:
     @patch("agents.health_monitor.load_axioms")
-    @patch("agents.health_monitor.AXIOMS_PATH", new_callable=lambda: type("", (), {"__truediv__": lambda s, o: Path("/fake")})())
+    @patch(
+        "agents.health_monitor.AXIOMS_PATH",
+        new_callable=lambda: type("", (), {"__truediv__": lambda s, o: Path("/fake")})(),
+    )
     async def test_registry_missing(self, mock_path, mock_load):
         mock_load.return_value = []
         results = await check_axiom_infrastructure()
@@ -1405,25 +1477,26 @@ In `drift_detector.py`, update the `DriftItem.category` field description to inc
 In `detect_drift()`, after the goals section is built (~line 161), add:
 
 ```python
-    # Build axiom compliance section
-    axiom_section = ""
-    try:
-        from shared.axiom_registry import load_axioms, load_implications
-        active_axioms = load_axioms()
-        if active_axioms:
-            axiom_lines = ["\n\n## Active Axioms (check for compliance)"]
-            for ax in active_axioms:
-                axiom_lines.append(f"\n### {ax.id} (weight={ax.weight}, type={ax.type})")
-                axiom_lines.append(ax.text.strip())
-                impls = load_implications(ax.id)
-                blocking = [i for i in impls if i.enforcement in ("block", "review")]
-                if blocking:
-                    axiom_lines.append("Key implications to check:")
-                    for impl in blocking:
-                        axiom_lines.append(f"  - [{impl.tier}] {impl.text}")
-            axiom_section = "\n".join(axiom_lines)
-    except Exception as e:
-        log.warning("Could not load axioms for drift check: %s", e)
+# Build axiom compliance section
+axiom_section = ""
+try:
+    from shared.axiom_registry import load_axioms, load_implications
+
+    active_axioms = load_axioms()
+    if active_axioms:
+        axiom_lines = ["\n\n## Active Axioms (check for compliance)"]
+        for ax in active_axioms:
+            axiom_lines.append(f"\n### {ax.id} (weight={ax.weight}, type={ax.type})")
+            axiom_lines.append(ax.text.strip())
+            impls = load_implications(ax.id)
+            blocking = [i for i in impls if i.enforcement in ("block", "review")]
+            if blocking:
+                axiom_lines.append("Key implications to check:")
+                for impl in blocking:
+                    axiom_lines.append(f"  - [{impl.tier}] {impl.text}")
+        axiom_section = "\n".join(axiom_lines)
+except Exception as e:
+    log.warning("Could not load axioms for drift check: %s", e)
 ```
 
 Then include `{axiom_section}` in the prompt string alongside `{goals_section}`.
@@ -1478,17 +1551,18 @@ Add axiom section to briefing and review tools to cockpit.
 In `briefing.py`, in the data collection section (after goals, before predictive), add:
 
 ```python
-    # Axiom enforcement section
-    axiom_section = ""
-    try:
-        from shared.axiom_precedents import PrecedentStore
-        store = PrecedentStore()
-        pending = store.get_pending_review(limit=50)
-        if pending:
-            axiom_section = f"\n\n## Axiom Enforcement\n- {len(pending)} agent precedent(s) awaiting operator review"
-            axiom_section += "\n- Use `/axioms review` in cockpit to confirm or reject"
-    except Exception:
-        pass  # Axiom infrastructure may not be set up yet
+# Axiom enforcement section
+axiom_section = ""
+try:
+    from shared.axiom_precedents import PrecedentStore
+
+    store = PrecedentStore()
+    pending = store.get_pending_review(limit=50)
+    if pending:
+        axiom_section = f"\n\n## Axiom Enforcement\n- {len(pending)} agent precedent(s) awaiting operator review"
+        axiom_section += "\n- Use `/axioms review` in cockpit to confirm or reject"
+except Exception:
+    pass  # Axiom infrastructure may not be set up yet
 ```
 
 Include `{axiom_section}` in the prompt.
@@ -1498,80 +1572,89 @@ Include `{axiom_section}` in the prompt.
 In `cockpit/chat_agent.py`, after the existing tool registrations, add:
 
 ```python
-    @agent.tool
-    async def review_pending_precedents(ctx: RunContext[ChatDeps]) -> str:
-        """Show axiom precedents created by agents that await operator review."""
-        from shared.axiom_precedents import PrecedentStore
-        try:
-            store = PrecedentStore()
-            pending = store.get_pending_review()
-        except Exception as e:
-            return f"Could not access precedent store: {e}"
+@agent.tool
+async def review_pending_precedents(ctx: RunContext[ChatDeps]) -> str:
+    """Show axiom precedents created by agents that await operator review."""
+    from shared.axiom_precedents import PrecedentStore
 
-        if not pending:
-            return "No pending precedents to review."
+    try:
+        store = PrecedentStore()
+        pending = store.get_pending_review()
+    except Exception as e:
+        return f"Could not access precedent store: {e}"
 
-        lines = [f"{len(pending)} pending precedent(s):\n"]
-        for p in pending:
-            lines.append(f"**{p.id}** (axiom: {p.axiom_id}, tier: {p.tier})")
-            lines.append(f"  Situation: {p.situation}")
-            lines.append(f"  Decision: {p.decision}")
-            lines.append(f"  Reasoning: {p.reasoning}")
-            lines.append(f"  Facts: {', '.join(p.distinguishing_facts)}")
-            lines.append("")
-        lines.append("Use confirm_precedent(id) to promote or reject_precedent(id, correction) to supersede.")
-        return "\n".join(lines)
+    if not pending:
+        return "No pending precedents to review."
 
-    @agent.tool
-    async def confirm_precedent(ctx: RunContext[ChatDeps], precedent_id: str) -> str:
-        """Promote an agent-created precedent to operator authority.
+    lines = [f"{len(pending)} pending precedent(s):\n"]
+    for p in pending:
+        lines.append(f"**{p.id}** (axiom: {p.axiom_id}, tier: {p.tier})")
+        lines.append(f"  Situation: {p.situation}")
+        lines.append(f"  Decision: {p.decision}")
+        lines.append(f"  Reasoning: {p.reasoning}")
+        lines.append(f"  Facts: {', '.join(p.distinguishing_facts)}")
+        lines.append("")
+    lines.append(
+        "Use confirm_precedent(id) to promote or reject_precedent(id, correction) to supersede."
+    )
+    return "\n".join(lines)
 
-        Args:
-            precedent_id: The precedent ID to confirm (e.g., PRE-20260303-abc123).
-        """
-        from shared.axiom_precedents import PrecedentStore
-        try:
-            store = PrecedentStore()
-            store.promote(precedent_id)
-            return f"Promoted {precedent_id} to operator authority."
-        except Exception as e:
-            return f"Failed to promote: {e}"
 
-    @agent.tool
-    async def reject_precedent(
-        ctx: RunContext[ChatDeps], precedent_id: str, correction: str,
-    ) -> str:
-        """Reject an agent precedent and record the operator's correction.
+@agent.tool
+async def confirm_precedent(ctx: RunContext[ChatDeps], precedent_id: str) -> str:
+    """Promote an agent-created precedent to operator authority.
 
-        Args:
-            precedent_id: The precedent ID to reject.
-            correction: The operator's corrected reasoning for this situation.
-        """
-        from shared.axiom_precedents import PrecedentStore, Precedent
-        try:
-            store = PrecedentStore()
-            # Get the original to preserve context
-            results = store.get_pending_review(limit=50)
-            original = next((p for p in results if p.id == precedent_id), None)
-            if not original:
-                return f"Precedent {precedent_id} not found in pending review."
+    Args:
+        precedent_id: The precedent ID to confirm (e.g., PRE-20260303-abc123).
+    """
+    from shared.axiom_precedents import PrecedentStore
 
-            new = Precedent(
-                id="",
-                axiom_id=original.axiom_id,
-                situation=original.situation,
-                decision=original.decision,
-                reasoning=correction,
-                tier=original.tier,
-                distinguishing_facts=original.distinguishing_facts,
-                authority="operator",
-                created="",
-                superseded_by=None,
-            )
-            new_id = store.supersede(precedent_id, new)
-            return f"Superseded {precedent_id} with {new_id} (operator authority)."
-        except Exception as e:
-            return f"Failed to reject: {e}"
+    try:
+        store = PrecedentStore()
+        store.promote(precedent_id)
+        return f"Promoted {precedent_id} to operator authority."
+    except Exception as e:
+        return f"Failed to promote: {e}"
+
+
+@agent.tool
+async def reject_precedent(
+    ctx: RunContext[ChatDeps],
+    precedent_id: str,
+    correction: str,
+) -> str:
+    """Reject an agent precedent and record the operator's correction.
+
+    Args:
+        precedent_id: The precedent ID to reject.
+        correction: The operator's corrected reasoning for this situation.
+    """
+    from shared.axiom_precedents import PrecedentStore, Precedent
+
+    try:
+        store = PrecedentStore()
+        # Get the original to preserve context
+        results = store.get_pending_review(limit=50)
+        original = next((p for p in results if p.id == precedent_id), None)
+        if not original:
+            return f"Precedent {precedent_id} not found in pending review."
+
+        new = Precedent(
+            id="",
+            axiom_id=original.axiom_id,
+            situation=original.situation,
+            decision=original.decision,
+            reasoning=correction,
+            tier=original.tier,
+            distinguishing_facts=original.distinguishing_facts,
+            authority="operator",
+            created="",
+            superseded_by=None,
+        )
+        new_id = store.supersede(precedent_id, new)
+        return f"Superseded {precedent_id} with {new_id} (operator authority)."
+    except Exception as e:
+        return f"Failed to reject: {e}"
 ```
 
 **Step 3: Register axiom tools on LLM agents**
@@ -1579,9 +1662,10 @@ In `cockpit/chat_agent.py`, after the existing tool registrations, add:
 In each agent that makes decisions, add after the context tools registration:
 
 ```python
-    from shared.axiom_tools import get_axiom_tools
-    for tool_fn in get_axiom_tools():
-        agent.tool(tool_fn)
+from shared.axiom_tools import get_axiom_tools
+
+for tool_fn in get_axiom_tools():
+    agent.tool(tool_fn)
 ```
 
 Files to modify:
@@ -1615,6 +1699,7 @@ One-shot LLM derivation of axiom implications with self-consistency.
 ```python
 # tests/test_axiom_derivation.py
 """Tests for shared.axiom_derivation."""
+
 import pytest
 from unittest.mock import patch, MagicMock
 
@@ -1637,7 +1722,9 @@ class TestBuildPrompt:
 
     def test_includes_interpretive_canons(self):
         prompt = build_derivation_prompt(
-            axiom_id="test", axiom_text="Test.", codebase_context="",
+            axiom_id="test",
+            axiom_text="Test.",
+            codebase_context="",
         )
         assert "purposivist" in prompt.lower() or "Purposivist" in prompt
         assert "absurdity" in prompt.lower() or "Absurdity" in prompt
@@ -1673,9 +1760,33 @@ class TestParseOutput:
 class TestMergeSelfConsistent:
     def test_majority_vote_keeps_consensus(self):
         runs = [
-            [{"id": "su-001", "tier": "T0", "text": "No multi-user auth", "enforcement": "block", "canon": "textualist"}],
-            [{"id": "su-001", "tier": "T0", "text": "No multi-user auth", "enforcement": "block", "canon": "textualist"}],
-            [{"id": "su-001", "tier": "T1", "text": "No multi-user auth", "enforcement": "review", "canon": "textualist"}],
+            [
+                {
+                    "id": "su-001",
+                    "tier": "T0",
+                    "text": "No multi-user auth",
+                    "enforcement": "block",
+                    "canon": "textualist",
+                }
+            ],
+            [
+                {
+                    "id": "su-001",
+                    "tier": "T0",
+                    "text": "No multi-user auth",
+                    "enforcement": "block",
+                    "canon": "textualist",
+                }
+            ],
+            [
+                {
+                    "id": "su-001",
+                    "tier": "T1",
+                    "text": "No multi-user auth",
+                    "enforcement": "review",
+                    "canon": "textualist",
+                }
+            ],
         ]
         merged = merge_self_consistent(runs)
         # Majority says T0/block
@@ -1687,8 +1798,10 @@ class TestMergeSelfConsistent:
         runs = [
             [{"id": "su-001", "tier": "T0", "text": "A", "enforcement": "block", "canon": "t"}],
             [{"id": "su-002", "tier": "T1", "text": "B", "enforcement": "review", "canon": "t"}],
-            [{"id": "su-001", "tier": "T0", "text": "A", "enforcement": "block", "canon": "t"},
-             {"id": "su-003", "tier": "T2", "text": "C", "enforcement": "warn", "canon": "t"}],
+            [
+                {"id": "su-001", "tier": "T0", "text": "A", "enforcement": "block", "canon": "t"},
+                {"id": "su-003", "tier": "T2", "text": "C", "enforcement": "warn", "canon": "t"},
+            ],
         ]
         merged = merge_self_consistent(runs)
         ids = {i["id"] for i in merged}
